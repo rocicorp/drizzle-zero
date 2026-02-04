@@ -1,14 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "verbatimModuleSyntax": true,
-    "esModuleInterop": true,
-    "moduleResolution": "bundler",
-    "moduleDetection": "force",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": ["**/*.ts"]
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"verbatimModuleSyntax": true,
+		"esModuleInterop": true,
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"paths": {
+			"@/*": ["./*"]
+		}
+	},
+	"include": ["**/*.ts"]
 }

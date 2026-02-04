@@ -1,16 +1,16 @@
-import {drizzleZeroConfig} from '../../src';
-import * as oneToOne from './one-to-one.schema';
+import { drizzleZeroConfig } from '../../src'
+import * as oneToOne from './one-to-one.schema'
 
 export const schema = drizzleZeroConfig(oneToOne, {
-  tables: {
-    users: {
-      id: true,
-      name: true,
-    },
-    profileInfo: {
-      id: true,
-      userId: true,
-      metadata: true,
-    },
-  },
-});
+	tables: {
+		users: {
+			id: true,
+			name: true,
+		},
+		profileInfo: {
+			id: true,
+			userId: true,
+			metadata: true,
+		},
+	},
+})

@@ -1,19 +1,19 @@
 {
-  "name": "@drizzle-zero/no-config-integration",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "generate": "drizzle-zero generate -f -s ../db/schema.ts",
-    "pretest": "pnpm generate",
-    "test": "pnpm build && vitest run"
-  },
-  "dependencies": {
-    "@drizzle-zero/custom-types": "workspace:*",
-    "@drizzle-zero/db": "workspace:*",
-    "@hono/node-server": "^1.19.6",
-    "drizzle-zero": "workspace:*",
-    "hono": "^4.10.7",
-    "zod": "^4.1.13"
-  }
+	"name": "@drizzle-zero/no-config-integration",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"generate": "drizzle-zero generate -f -s ../db/schema.ts",
+		"pretest": "pnpm generate",
+		"test": "pnpm build && vitest run"
+	},
+	"dependencies": {
+		"@drizzle-zero/custom-types": "workspace:*",
+		"@drizzle-zero/db": "workspace:*",
+		"@hono/node-server": "^1.19.9",
+		"drizzle-zero": "workspace:*",
+		"hono": "^4.11.4",
+		"zod": "^4.3.5"
+	}
 }

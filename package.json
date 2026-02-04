@@ -1,121 +1,122 @@
 {
-  "name": "drizzle-zero",
-  "version": "0.17.0",
-  "description": "Generate Zero schemas from Drizzle ORM schemas",
-  "type": "module",
-  "scripts": {
-    "clean": "rm -rf dist node_modules coverage && cd integration && rm -rf node_modules && cd ../no-config-integration && rm -rf node_modules && cd ../db && rm -rf node_modules",
-    "build": "rm -rf dist && tsx build.ts && chmod +x dist/cli/index.js",
-    "release": "pnpm run build && pnpm publish",
-    "format": "prettier --write .",
-    "check-format": "prettier --check .",
-    "check-types": "tsc",
-    "lint": "oxlint --type-aware --quiet",
-    "test": "vitest run --typecheck --coverage",
-    "test:ui": "vitest --ui"
-  },
-  "bin": {
-    "drizzle-zero": "./dist/cli/index.js"
-  },
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist/",
-    "README.md",
-    "LICENSE"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rocicorp/drizzle-zero.git"
-  },
-  "keywords": [
-    "zero",
-    "sync",
-    "local-first",
-    "schema",
-    "drizzle",
-    "orm",
-    "pg",
-    "postgresql",
-    "postgres",
-    "database",
-    "typescript",
-    "ts"
-  ],
-  "bugs": {
-    "url": "https://bugs.rocicorp.dev"
-  },
-  "peerDependencies": {
-    "@rocicorp/zero": "",
-    "@types/pg": "",
-    "drizzle-orm": ">=0.36.0",
-    "pg": "",
-    "postgres": "",
-    "prettier": ">=3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "pg": {
-      "optional": true
-    },
-    "prettier": {
-      "optional": true
-    },
-    "@types/pg": {
-      "optional": true
-    },
-    "postgres": {
-      "optional": true
-    }
-  },
-  "dependencies": {
-    "camelcase": "^9.0.0",
-    "commander": "^14.0.1",
-    "jsonc-parser": "^3.3.1",
-    "pluralize": "^8.0.0",
-    "ts-morph": "^27.0.2"
-  },
-  "devDependencies": {
-    "@rocicorp/prettier-config": "^0.4.0",
-    "@rocicorp/zero": "0.25.1",
-    "@ts-morph/common": "^0.28.1",
-    "@types/node": "^24.10.1",
-    "@types/pg": "^8.15.6",
-    "@types/pluralize": "^0.0.33",
-    "@types/ws": "^8.18.1",
-    "@vitest/browser": "^4.0.15",
-    "@vitest/coverage-v8": "4.0.15",
-    "@vitest/ui": "^4.0.15",
-    "drizzle-kit": "^0.31.8",
-    "drizzle-orm": "^1.0.0-beta.2",
-    "oxlint": "^1.31.0",
-    "oxlint-tsgolint": "^0.8.3",
-    "prettier": "^3.7.4",
-    "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.15",
-    "ws": "^8.18.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@rocicorp/zero-sqlite3",
-      "cpu-features",
-      "esbuild",
-      "msw",
-      "protobufjs",
-      "ssh2"
-    ]
-  },
-  "packageManager": "pnpm@10.18.3",
-  "prettier": "@rocicorp/prettier-config"
+	"name": "drizzle-zero",
+	"version": "0.17.2",
+	"description": "Generate Zero schemas from Drizzle ORM schemas",
+	"type": "module",
+	"scripts": {
+		"clean": "rm -rf dist node_modules coverage && cd integration && rm -rf node_modules && cd ../no-config-integration && rm -rf node_modules && cd ../db && rm -rf node_modules",
+		"build": "rm -rf dist && tsx build.ts && chmod +x dist/cli/index.js",
+		"release": "pnpm run build && pnpm publish",
+		"format": "prettier --write .",
+		"check-format": "prettier --check .",
+		"check-types": "tsc",
+		"lint": "oxlint --type-aware --quiet",
+		"test": "vitest run --typecheck --coverage",
+		"test:ui": "vitest --ui"
+	},
+	"bin": {
+		"drizzle-zero": "./dist/cli/index.js"
+	},
+	"main": "dist/index.cjs",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist/",
+		"README.md",
+		"LICENSE"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rocicorp/drizzle-zero.git"
+	},
+	"keywords": [
+		"zero",
+		"sync",
+		"local-first",
+		"schema",
+		"drizzle",
+		"orm",
+		"pg",
+		"postgresql",
+		"postgres",
+		"database",
+		"typescript",
+		"ts"
+	],
+	"bugs": {
+		"url": "https://bugs.rocicorp.dev"
+	},
+	"peerDependencies": {
+		"@rocicorp/zero": "",
+		"@types/pg": "",
+		"drizzle-orm": ">=1.0.0-beta.2",
+		"pg": "",
+		"postgres": "",
+		"prettier": ">=3.0.0"
+	},
+	"peerDependenciesMeta": {
+		"pg": {
+			"optional": true
+		},
+		"prettier": {
+			"optional": true
+		},
+		"@types/pg": {
+			"optional": true
+		},
+		"postgres": {
+			"optional": true
+		}
+	},
+	"dependencies": {
+		"camelcase": "^9.0.0",
+		"commander": "^14.0.1",
+		"jsonc-parser": "^3.3.1",
+		"pluralize": "^8.0.0",
+		"ts-morph": "^27.0.2"
+	},
+	"devDependencies": {
+		"@rocicorp/prettier-config": "^0.4.0",
+		"@rocicorp/zero": "0.25.9",
+		"@ts-morph/common": "^0.28.1",
+		"@types/node": "^25.0.9",
+		"@types/pg": "^8.16.0",
+		"@types/pluralize": "^0.0.33",
+		"@types/ws": "^8.18.1",
+		"@vitest/browser": "^4.0.17",
+		"@vitest/coverage-v8": "4.0.17",
+		"@vitest/ui": "^4.0.17",
+		"drizzle-kit": "beta",
+		"drizzle-orm": "beta",
+		"drizzle-zod": "beta",
+		"oxlint": "^1.39.0",
+		"oxlint-tsgolint": "^0.11.1",
+		"prettier": "^3.8.0",
+		"tsup": "^8.5.1",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3",
+		"vite-tsconfig-paths": "^6.0.4",
+		"vitest": "^4.0.17",
+		"ws": "^8.19.0"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@rocicorp/zero-sqlite3",
+			"cpu-features",
+			"esbuild",
+			"msw",
+			"protobufjs",
+			"ssh2"
+		]
+	},
+	"packageManager": "pnpm@10.18.3",
+	"prettier": "@rocicorp/prettier-config"
 }
