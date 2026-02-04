@@ -1,19 +1,19 @@
 {
-  "name": "@drizzle-zero/integration",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "generate": "drizzle-zero generate -f --skip-declare",
-    "pretest": "pnpm generate",
-    "test": "pnpm build && vitest run"
-  },
-  "dependencies": {
-    "@drizzle-zero/custom-types": "workspace:*",
-    "@drizzle-zero/db": "workspace:*",
-    "@hono/node-server": "^1.19.9",
-    "drizzle-zero": "workspace:*",
-    "hono": "^4.11.4",
-    "zod": "^4.3.5"
-  }
+	"name": "@drizzle-zero/integration",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"generate": "drizzle-zero generate -f --skip-declare",
+		"pretest": "pnpm generate",
+		"test": "pnpm build && vitest run"
+	},
+	"dependencies": {
+		"@drizzle-zero/custom-types": "workspace:*",
+		"@drizzle-zero/db": "workspace:*",
+		"@hono/node-server": "^1.19.9",
+		"drizzle-zero": "workspace:*",
+		"hono": "^4.11.4",
+		"zod": "^4.3.5"
+	}
 }

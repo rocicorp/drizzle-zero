@@ -1,25 +1,25 @@
-import {drizzleZeroConfig} from '../../src';
-import * as manyToManyConflicts from './many-to-many-relation-name-conflicts-column.schema';
+import { drizzleZeroConfig } from '../../src'
+import * as manyToManyConflicts from './many-to-many-relation-name-conflicts-column.schema'
 
 export const schema = drizzleZeroConfig(manyToManyConflicts, {
-  tables: {
-    users: {
-      id: true,
-      name: true,
-      groups: true, // This column will conflict with the many-to-many relationship name
-    },
-    groups: {
-      id: true,
-      name: true,
-    },
-    usersToGroups: {
-      userId: true,
-      groupId: true,
-    },
-  },
-  manyToMany: {
-    users: {
-      groups: ['usersToGroups', 'groups'], // This will conflict with the 'groups' column
-    },
-  },
-});
+	tables: {
+		users: {
+			id: true,
+			name: true,
+			groups: true, // This column will conflict with the many-to-many relationship name
+		},
+		groups: {
+			id: true,
+			name: true,
+		},
+		usersToGroups: {
+			userId: true,
+			groupId: true,
+		},
+	},
+	manyToMany: {
+		users: {
+			groups: ['usersToGroups', 'groups'], // This will conflict with the 'groups' column
+		},
+	},
+})

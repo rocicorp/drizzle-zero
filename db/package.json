@@ -1,28 +1,28 @@
 {
-  "name": "@drizzle-zero/db",
-  "private": true,
-  "type": "module",
-  "exports": {
-    "./schema": "./schema.ts",
-    "./test-utils": "./test-utils.ts",
-    "./types": "./drizzle/types.ts"
-  },
-  "scripts": {
-    "db:generate": "drizzle-kit generate"
-  },
-  "dependencies": {
-    "@drizzle-zero/custom-types": "workspace:*",
-    "drizzle-zero": "workspace:*"
-  },
-  "devDependencies": {
-    "@testcontainers/postgresql": "^11.11.0",
-    "@types/pg": "^8.16.0",
-    "@vitest/browser": "^4.0.17",
-    "drizzle-kit": "^1.0.0-beta.10",
-    "pg": "^8.17.1",
-    "postgres": "^3.4.8",
-    "prettier": "^3.8.0",
-    "testcontainers": "^11.11.0",
-    "zod": "^4.3.5"
-  }
+	"name": "@drizzle-zero/db",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./schema": "./schema.ts",
+		"./test-utils": "./test-utils.ts",
+		"./types": "./drizzle/types.ts"
+	},
+	"scripts": {
+		"db:generate": "drizzle-kit generate"
+	},
+	"dependencies": {
+		"@drizzle-zero/custom-types": "workspace:*",
+		"drizzle-zero": "workspace:*"
+	},
+	"devDependencies": {
+		"@testcontainers/postgresql": "^11.11.0",
+		"@types/pg": "^8.16.0",
+		"@vitest/browser": "^4.0.17",
+		"drizzle-kit": "^1.0.0-beta.10",
+		"pg": "^8.17.1",
+		"postgres": "^3.4.8",
+		"prettier": "^3.8.0",
+		"testcontainers": "^11.11.0",
+		"zod": "^4.3.5"
+	}
 }

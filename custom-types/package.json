@@ -1,8 +1,8 @@
 {
-  "name": "@drizzle-zero/custom-types",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./index.ts"
-  }
+	"name": "@drizzle-zero/custom-types",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	}
 }
