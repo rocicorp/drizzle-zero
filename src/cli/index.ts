@@ -6,6 +6,7 @@ import {Project} from 'ts-morph';
 import {getConfigFromFile, getDefaultConfigFilePath} from './config';
 import {getDefaultConfig} from './drizzle-kit';
 import {getGeneratedSchema} from './shared';
+import {checkSignature, signContent} from './signature';
 import {discoverAllTsConfigs} from './tsconfig';
 import {
   addSourceFilesFromTsConfigSafe,
@@ -58,6 +59,7 @@ export interface GeneratorOptions {
   drizzleSchemaPath?: string;
   drizzleKitConfigPath?: string;
   debug?: boolean;
+  force?: boolean;
   jsFileExtension?: boolean;
   skipTypes?: boolean;
   skipBuilder?: boolean;
@@ -165,7 +167,7 @@ async function main(opts: GeneratorOptions = {}) {
     );
   }
 
-  return zeroSchemaGenerated;
+  return signContent(zeroSchemaGenerated);
 }
 
 function cli() {
@@ -224,6 +226,11 @@ function cli() {
       'Hide warnings for columns with default values',
       false,
     )
+    .option(
+      '--force',
+      'Overwrite the output file even if it has been manually modified',
+      false,
+    )
     .action(async command => {
       console.log(`⚙️  drizzle-zero: Generating zero schema...`);
 
@@ -235,6 +242,7 @@ function cli() {
         drizzleSchemaPath: command.schema,
         drizzleKitConfigPath: command.drizzleKitConfig,
         debug: command.debug,
+        force: command.force,
         jsFileExtension: command.jsFileExtension,
         skipTypes: command.skipTypes,
         skipBuilder: command.skipBuilder,
@@ -246,6 +254,31 @@ function cli() {
 
       if (command.output) {
         const outputPath = path.resolve(process.cwd(), command.output);
+
+        if (!command.force) {
+          try {
+            const existing = await fs.readFile(outputPath, 'utf-8');
+            const status = checkSignature(existing);
+            if (status === 'modified') {
+              console.error(
+                `❌ drizzle-zero: ${outputPath} has been manually modified. Use --force to overwrite.`,
+              );
+              process.exit(1);
+            }
+          } catch (e: unknown) {
+            if (
+              !(
+                typeof e === 'object' &&
+                e !== null &&
+                'code' in e &&
+                e.code === 'ENOENT'
+              )
+            ) {
+              throw e;
+            }
+          }
+        }
+
         await fs.writeFile(outputPath, zeroSchema);
         console.log(`✅ drizzle-zero: Zero schema written to ${outputPath}`);
       } else {

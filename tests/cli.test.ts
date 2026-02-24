@@ -7,6 +7,7 @@ import {
   getZeroSchemaDefsFromConfig,
 } from '../src/cli/config';
 import {getGeneratedSchema} from '../src/cli/shared';
+import {checkSignature, signContent} from '../src/cli/signature';
 import type {DrizzleToZeroSchema} from '../src/relations';
 
 describe('getGeneratedSchema', () => {
@@ -1705,5 +1706,99 @@ describe('getConfigFromFile', () => {
     // Verify some expected tables from the integration config
     expect(result.zeroSchema?.tables).toHaveProperty('user');
     expect(result.zeroSchema?.tables).toHaveProperty('message');
+  });
+});
+
+describe('signature integration', () => {
+  let tsProject: Project;
+  const outputFilePath = 'test-output.gen.ts';
+  const schemaPath = path.resolve(__dirname, './schemas/one-to-one.zero.ts');
+
+  beforeEach(() => {
+    tsProject = new Project({
+      tsConfigFilePath: path.resolve(__dirname, '../tsconfig.json'),
+      skipAddingFilesFromTsConfig: true,
+    });
+    tsProject.addSourceFileAtPath(schemaPath);
+  });
+
+  afterEach(async () => {
+    try {
+      await fs.unlink(outputFilePath);
+    } catch {
+      // Ignore error if file doesn't exist
+    }
+  });
+
+  it('should produce a valid signature when signing generated schema', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            users: {
+              name: 'users',
+              primaryKey: ['id'],
+              columns: {
+                id: {type: 'number', optional: false, customType: undefined},
+                name: {type: 'string', optional: false, customType: undefined},
+              },
+            },
+          },
+          relationships: {},
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+    });
+
+    const signed = signContent(generatedSchema);
+    expect(checkSignature(signed)).toBe('valid');
+  });
+
+  it('should detect tampering in a signed generated schema', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            users: {
+              name: 'users',
+              primaryKey: ['id'],
+              columns: {
+                id: {type: 'number', optional: false, customType: undefined},
+                name: {type: 'string', optional: false, customType: undefined},
+              },
+            },
+          },
+          relationships: {},
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+    });
+
+    const signed = signContent(generatedSchema);
+    const tampered = signed.replace(
+      'export const schema',
+      'export const mySchema',
+    );
+    expect(checkSignature(tampered)).toBe('modified');
   });
 });
