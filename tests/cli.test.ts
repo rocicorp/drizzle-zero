@@ -1610,13 +1610,15 @@ describe('drizzle-kit functions', () => {
 
       try {
         // Setup mocks before importing the function
+        const mockImport = vi.fn().mockImplementation(path => {
+          if (path.includes('temp-drizzle-schema.ts')) {
+            return {users: {}};
+          }
+          return {};
+        });
         vi.doMock('tsx/esm/api', () => ({
-          tsImport: vi.fn().mockImplementation(path => {
-            if (path.includes('temp-drizzle-schema.ts')) {
-              return {users: {}};
-            }
-            return {};
-          }),
+          tsImport: mockImport,
+          register: vi.fn().mockReturnValue({import: mockImport}),
         }));
 
         vi.doMock('../src/relations', () => ({

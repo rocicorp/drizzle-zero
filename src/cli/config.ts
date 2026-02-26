@@ -2,8 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as url from 'node:url';
 import type {Project} from 'ts-morph';
-import {tsImport} from 'tsx/esm/api';
 import type {DrizzleToZeroSchema} from '../relations';
+import {tsImportShared} from './ts-import';
 
 export const defaultConfigFilePath = 'drizzle-zero.config.ts';
 
@@ -40,7 +40,7 @@ export const getConfigFromFile = async ({
 
   try {
     const zeroConfigFilePathUrl = url.pathToFileURL(fullConfigPath).href;
-    const zeroConfigImport = await tsImport(
+    const zeroConfigImport = await tsImportShared(
       zeroConfigFilePathUrl,
       import.meta.url,
     );
