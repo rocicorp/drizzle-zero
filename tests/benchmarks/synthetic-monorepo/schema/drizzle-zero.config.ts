@@ -1,4 +1,4 @@
-import { drizzleZeroConfig } from "../../src";
+import { drizzleZeroConfig } from "drizzle-zero";
 import * as schema from "./schema";
 
 export default drizzleZeroConfig(schema, {

@@ -1,42 +1,19 @@
+import {execSync} from 'node:child_process';
 import * as path from 'node:path';
-import {Project} from 'ts-morph';
 import {bench, describe} from 'vitest';
-import {
-  addSourceFilesFromTsConfigSafe,
-  ensureSourceFileInProject,
-} from '../src/cli/ts-project';
-import {discoverAllTsConfigs} from '../src/cli/tsconfig';
 
-const fixtureRoot = path.resolve(
-  __dirname,
-  'benchmarks/synthetic-monorepo/tsconfig.json',
-);
-const schemaConfigFile = path.resolve(
-  __dirname,
-  'benchmarks/synthetic-monorepo/schema/drizzle-zero.config.ts',
-);
+const cliPath = path.resolve(__dirname, '../dist/cli/index.js');
+const fixtureDir = path.resolve(__dirname, 'benchmarks/synthetic-monorepo');
 
-describe('file loading', () => {
-  bench('eager: load all files from all tsconfigs', async () => {
-    const allTsConfigPaths = await discoverAllTsConfigs(fixtureRoot);
-    const project = new Project({
-      tsConfigFilePath: fixtureRoot,
-      skipAddingFilesFromTsConfig: true,
-    });
-    for (const tsConfigPath of allTsConfigPaths) {
-      addSourceFilesFromTsConfigSafe({tsProject: project, tsConfigPath});
-    }
-  });
-
-  bench('targeted: load only the requested file', async () => {
-    const project = new Project({
-      tsConfigFilePath: fixtureRoot,
-      skipAddingFilesFromTsConfig: true,
-    });
-    ensureSourceFileInProject({
-      tsProject: project,
-      filePath: schemaConfigFile,
-      debug: false,
-    });
-  });
+describe('generate', () => {
+  bench(
+    'end-to-end generate on synthetic monorepo',
+    () => {
+      execSync(
+        `node ${cliPath} generate --config schema/drizzle-zero.config.ts --output /tmp/drizzle-zero-bench-output.ts --suppress-defaults-warning --force`,
+        {cwd: fixtureDir, stdio: 'ignore'},
+      );
+    },
+    {warmupIterations: 1, iterations: 5, time: 0},
+  );
 });
