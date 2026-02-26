@@ -1,125 +1,50 @@
-// pkg-06 / types-22  (seed 622) - expensive recursive & mapped types
+// pkg-06/types-22 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_5_01, Registry_5_01 } from '../pkg-05/types-01';
+import type { Entity_5_10, Registry_5_10 } from '../pkg-05/types-10';
+import type { Entity_5_20, Registry_5_20 } from '../pkg-05/types-20';
+import type { Entity_4_01, Registry_4_01 } from '../pkg-04/types-01';
+import type { Entity_4_10, Registry_4_10 } from '../pkg-04/types-10';
+import type { Entity_4_20, Registry_4_20 } from '../pkg-04/types-20';
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+
+type DeepMerge_0622<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0622<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord622 {
-  a622: { x: number; y: string; z: boolean };
-  b622: { p: string[]; q: Record<string, number> };
-  c622: { nested: { deep: { deeper: { deepest: string } } } };
-  d622: number;
-  e622: string;
-  f622: boolean;
-  g622: null;
-  h622: undefined;
-  i622: bigint;
-  j622: symbol;
+interface Entity_06_22 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_06_22 | null; children: Entity_06_22[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d22: { x0622: number; y0622: string; z0622: boolean };
 }
 
-type PartialBig622 = DeepPartial<BigRecord622>;
+type Path_0622<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0622<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0622 = Path_0622<Entity_06_22>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten622<T> = T extends Array<infer U> ? Flatten622<U> : T;
-type Nested622 = number[][][][][][][][][][];
-type Flat622 = Flatten622<Nested622>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly622<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly622<T[K]> : T[K];
+type Val_0622<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0622<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0622<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired622<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired622<T[K]> : T[K];
-};
-type FR622 = DeepReadonly622<DeepRequired622<PartialBig622>>;
+type EV_0622 = Val_0622<Entity_06_22>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion622 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_06_22 {
+  entities: Map<string, Entity_06_22>;
+  validators: EV_0622;
+  paths: Set<EP_0622>;
+  merged: DeepMerge_0622<Entity_06_22, { extra0622: string }>;
+}
 
-type ExtractAlpha622 = Extract<BigUnion622, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu622 = Exclude<BigUnion622, "zulu">;
+type CK_0622 = `p06.t22.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA622 { width: number; height: number; depth: number }
-interface ShapeB622 { color: string; opacity: number; blend: string }
-interface ShapeC622 { x: number; y: number; z: number; w: number }
-interface ShapeD622 { label: string; title: string; summary: string }
-
-type Combined622 = ShapeA622 & ShapeB622 & ShapeC622 & ShapeD622;
-type OptionalAll622 = { [K in keyof Combined622]?: Combined622[K] };
-type RequiredAll622 = { [K in keyof Combined622]-?: Combined622[K] };
-type ReadonlyAll622 = { readonly [K in keyof Combined622]: Combined622[K] };
-type NullableAll622 = { [K in keyof Combined622]: Combined622[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString622<T> = T extends string ? true : false;
-type IsNumber622<T> = T extends number ? true : false;
-type TypeName622<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames622 = {
-  [K in keyof BigRecord622]: TypeName622<BigRecord622[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb622 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource622 = "user" | "post" | "comment" | "tag" | "category";
-type Action622 = `${Verb622}_${Resource622}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise622<T> = T extends Promise<infer U> ? UnwrapPromise622<U> : T;
-type UnwrapArray622<T> = T extends (infer U)[] ? UnwrapArray622<U> : T;
-type Head622<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail622<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation622<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation622<Exclude<T, K>>]
-  : never;
-
-type SmallUnion622 = "a" | "b" | "c" | "d";
-type AllPerms622 = Permutation622<SmallUnion622>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig622,
-  Flat622,
-  FR622,
-  BigUnion622,
-  ExtractAlpha622,
-  ExcludeZulu622,
-  OptionalAll622,
-  RequiredAll622,
-  ReadonlyAll622,
-  NullableAll622,
-  TypeNames622,
-  Action622,
-  AllPerms622,
-};
+export type { Entity_06_22, Registry_06_22, CK_0622, EP_0622, EV_0622, DeepMerge_0622 };

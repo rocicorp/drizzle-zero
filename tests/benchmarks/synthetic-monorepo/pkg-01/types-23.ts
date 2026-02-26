@@ -1,125 +1,41 @@
-// pkg-01 / types-23  (seed 123) - expensive recursive & mapped types
+// pkg-01/types-23 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+
+type DeepMerge_0123<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0123<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord123 {
-  a123: { x: number; y: string; z: boolean };
-  b123: { p: string[]; q: Record<string, number> };
-  c123: { nested: { deep: { deeper: { deepest: string } } } };
-  d123: number;
-  e123: string;
-  f123: boolean;
-  g123: null;
-  h123: undefined;
-  i123: bigint;
-  j123: symbol;
+interface Entity_01_23 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_01_23 | null; children: Entity_01_23[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d23: { x0123: number; y0123: string; z0123: boolean };
 }
 
-type PartialBig123 = DeepPartial<BigRecord123>;
+type Path_0123<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0123<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0123 = Path_0123<Entity_01_23>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten123<T> = T extends Array<infer U> ? Flatten123<U> : T;
-type Nested123 = number[][][][][][][][][][];
-type Flat123 = Flatten123<Nested123>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly123<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly123<T[K]> : T[K];
+type Val_0123<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0123<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0123<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired123<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired123<T[K]> : T[K];
-};
-type FR123 = DeepReadonly123<DeepRequired123<PartialBig123>>;
+type EV_0123 = Val_0123<Entity_01_23>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion123 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_01_23 {
+  entities: Map<string, Entity_01_23>;
+  validators: EV_0123;
+  paths: Set<EP_0123>;
+  merged: DeepMerge_0123<Entity_01_23, { extra0123: string }>;
+}
 
-type ExtractAlpha123 = Extract<BigUnion123, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu123 = Exclude<BigUnion123, "zulu">;
+type CK_0123 = `p01.t23.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA123 { width: number; height: number; depth: number }
-interface ShapeB123 { color: string; opacity: number; blend: string }
-interface ShapeC123 { x: number; y: number; z: number; w: number }
-interface ShapeD123 { label: string; title: string; summary: string }
-
-type Combined123 = ShapeA123 & ShapeB123 & ShapeC123 & ShapeD123;
-type OptionalAll123 = { [K in keyof Combined123]?: Combined123[K] };
-type RequiredAll123 = { [K in keyof Combined123]-?: Combined123[K] };
-type ReadonlyAll123 = { readonly [K in keyof Combined123]: Combined123[K] };
-type NullableAll123 = { [K in keyof Combined123]: Combined123[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString123<T> = T extends string ? true : false;
-type IsNumber123<T> = T extends number ? true : false;
-type TypeName123<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames123 = {
-  [K in keyof BigRecord123]: TypeName123<BigRecord123[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb123 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource123 = "user" | "post" | "comment" | "tag" | "category";
-type Action123 = `${Verb123}_${Resource123}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise123<T> = T extends Promise<infer U> ? UnwrapPromise123<U> : T;
-type UnwrapArray123<T> = T extends (infer U)[] ? UnwrapArray123<U> : T;
-type Head123<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail123<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation123<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation123<Exclude<T, K>>]
-  : never;
-
-type SmallUnion123 = "a" | "b" | "c" | "d";
-type AllPerms123 = Permutation123<SmallUnion123>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig123,
-  Flat123,
-  FR123,
-  BigUnion123,
-  ExtractAlpha123,
-  ExcludeZulu123,
-  OptionalAll123,
-  RequiredAll123,
-  ReadonlyAll123,
-  NullableAll123,
-  TypeNames123,
-  Action123,
-  AllPerms123,
-};
+export type { Entity_01_23, Registry_01_23, CK_0123, EP_0123, EV_0123, DeepMerge_0123 };

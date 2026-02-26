@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
+    "composite": true,
+    "strict": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "composite": true,
     "declaration": true,
-    "outDir": "out"
+    "outDir": "dist",
+    "rootDir": "."
   },
-  "include": ["./**/*.ts"]
+  "include": ["*.ts"]
 }

@@ -1,125 +1,50 @@
-// pkg-10 / types-13  (seed 1013) - expensive recursive & mapped types
+// pkg-10/types-13 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_9_01, Registry_9_01 } from '../pkg-09/types-01';
+import type { Entity_9_10, Registry_9_10 } from '../pkg-09/types-10';
+import type { Entity_9_20, Registry_9_20 } from '../pkg-09/types-20';
+import type { Entity_8_01, Registry_8_01 } from '../pkg-08/types-01';
+import type { Entity_8_10, Registry_8_10 } from '../pkg-08/types-10';
+import type { Entity_8_20, Registry_8_20 } from '../pkg-08/types-20';
+import type { Entity_7_01, Registry_7_01 } from '../pkg-07/types-01';
+import type { Entity_7_10, Registry_7_10 } from '../pkg-07/types-10';
+import type { Entity_7_20, Registry_7_20 } from '../pkg-07/types-20';
+
+type DeepMerge_1013<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_1013<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord1013 {
-  a1013: { x: number; y: string; z: boolean };
-  b1013: { p: string[]; q: Record<string, number> };
-  c1013: { nested: { deep: { deeper: { deepest: string } } } };
-  d1013: number;
-  e1013: string;
-  f1013: boolean;
-  g1013: null;
-  h1013: undefined;
-  i1013: bigint;
-  j1013: symbol;
+interface Entity_10_13 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_10_13 | null; children: Entity_10_13[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d13: { x1013: number; y1013: string; z1013: boolean };
 }
 
-type PartialBig1013 = DeepPartial<BigRecord1013>;
+type Path_1013<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_1013<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_1013 = Path_1013<Entity_10_13>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten1013<T> = T extends Array<infer U> ? Flatten1013<U> : T;
-type Nested1013 = number[][][][][][][][][][];
-type Flat1013 = Flatten1013<Nested1013>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly1013<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly1013<T[K]> : T[K];
+type Val_1013<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_1013<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_1013<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired1013<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired1013<T[K]> : T[K];
-};
-type FR1013 = DeepReadonly1013<DeepRequired1013<PartialBig1013>>;
+type EV_1013 = Val_1013<Entity_10_13>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion1013 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_10_13 {
+  entities: Map<string, Entity_10_13>;
+  validators: EV_1013;
+  paths: Set<EP_1013>;
+  merged: DeepMerge_1013<Entity_10_13, { extra1013: string }>;
+}
 
-type ExtractAlpha1013 = Extract<BigUnion1013, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu1013 = Exclude<BigUnion1013, "zulu">;
+type CK_1013 = `p10.t13.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA1013 { width: number; height: number; depth: number }
-interface ShapeB1013 { color: string; opacity: number; blend: string }
-interface ShapeC1013 { x: number; y: number; z: number; w: number }
-interface ShapeD1013 { label: string; title: string; summary: string }
-
-type Combined1013 = ShapeA1013 & ShapeB1013 & ShapeC1013 & ShapeD1013;
-type OptionalAll1013 = { [K in keyof Combined1013]?: Combined1013[K] };
-type RequiredAll1013 = { [K in keyof Combined1013]-?: Combined1013[K] };
-type ReadonlyAll1013 = { readonly [K in keyof Combined1013]: Combined1013[K] };
-type NullableAll1013 = { [K in keyof Combined1013]: Combined1013[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString1013<T> = T extends string ? true : false;
-type IsNumber1013<T> = T extends number ? true : false;
-type TypeName1013<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames1013 = {
-  [K in keyof BigRecord1013]: TypeName1013<BigRecord1013[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb1013 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource1013 = "user" | "post" | "comment" | "tag" | "category";
-type Action1013 = `${Verb1013}_${Resource1013}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise1013<T> = T extends Promise<infer U> ? UnwrapPromise1013<U> : T;
-type UnwrapArray1013<T> = T extends (infer U)[] ? UnwrapArray1013<U> : T;
-type Head1013<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail1013<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation1013<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation1013<Exclude<T, K>>]
-  : never;
-
-type SmallUnion1013 = "a" | "b" | "c" | "d";
-type AllPerms1013 = Permutation1013<SmallUnion1013>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig1013,
-  Flat1013,
-  FR1013,
-  BigUnion1013,
-  ExtractAlpha1013,
-  ExcludeZulu1013,
-  OptionalAll1013,
-  RequiredAll1013,
-  ReadonlyAll1013,
-  NullableAll1013,
-  TypeNames1013,
-  Action1013,
-  AllPerms1013,
-};
+export type { Entity_10_13, Registry_10_13, CK_1013, EP_1013, EV_1013, DeepMerge_1013 };

@@ -7,7 +7,11 @@ import {getConfigFromFile, getDefaultConfigFilePath} from './config';
 import {getDefaultConfig} from './drizzle-kit';
 import {getGeneratedSchema} from './shared';
 import {checkSignature, signContent} from './signature';
-import {ensureSourceFileInProject} from './ts-project';
+import {discoverAllTsConfigs} from './tsconfig';
+import {
+  addSourceFilesFromTsConfigSafe,
+  ensureSourceFileInProject,
+} from './ts-project';
 
 const defaultConfigFile = './drizzle-zero.config.ts';
 const defaultOutputFile = './zero-schema.gen.ts';
@@ -100,6 +104,17 @@ async function main(opts: GeneratorOptions = {}) {
     tsConfigFilePath: resolvedTsConfigPath,
     skipAddingFilesFromTsConfig: true,
   });
+
+  if (process.env.DRIZZLE_ZERO_EAGER_LOADING) {
+    const allTsConfigPaths = await discoverAllTsConfigs(resolvedTsConfigPath);
+    for (const tsConfigPath of allTsConfigPaths) {
+      addSourceFilesFromTsConfigSafe({
+        tsProject,
+        tsConfigPath,
+        debug: Boolean(debug),
+      });
+    }
+  }
 
   if (configFilePath) {
     ensureSourceFileInProject({

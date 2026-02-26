@@ -1,125 +1,50 @@
-// pkg-10 / types-48  (seed 1048) - expensive recursive & mapped types
+// pkg-10/types-48 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_9_01, Registry_9_01 } from '../pkg-09/types-01';
+import type { Entity_9_10, Registry_9_10 } from '../pkg-09/types-10';
+import type { Entity_9_20, Registry_9_20 } from '../pkg-09/types-20';
+import type { Entity_8_01, Registry_8_01 } from '../pkg-08/types-01';
+import type { Entity_8_10, Registry_8_10 } from '../pkg-08/types-10';
+import type { Entity_8_20, Registry_8_20 } from '../pkg-08/types-20';
+import type { Entity_7_01, Registry_7_01 } from '../pkg-07/types-01';
+import type { Entity_7_10, Registry_7_10 } from '../pkg-07/types-10';
+import type { Entity_7_20, Registry_7_20 } from '../pkg-07/types-20';
+
+type DeepMerge_1048<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_1048<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord1048 {
-  a1048: { x: number; y: string; z: boolean };
-  b1048: { p: string[]; q: Record<string, number> };
-  c1048: { nested: { deep: { deeper: { deepest: string } } } };
-  d1048: number;
-  e1048: string;
-  f1048: boolean;
-  g1048: null;
-  h1048: undefined;
-  i1048: bigint;
-  j1048: symbol;
+interface Entity_10_48 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_10_48 | null; children: Entity_10_48[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d48: { x1048: number; y1048: string; z1048: boolean };
 }
 
-type PartialBig1048 = DeepPartial<BigRecord1048>;
+type Path_1048<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_1048<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_1048 = Path_1048<Entity_10_48>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten1048<T> = T extends Array<infer U> ? Flatten1048<U> : T;
-type Nested1048 = number[][][][][][][][][][];
-type Flat1048 = Flatten1048<Nested1048>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly1048<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly1048<T[K]> : T[K];
+type Val_1048<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_1048<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_1048<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired1048<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired1048<T[K]> : T[K];
-};
-type FR1048 = DeepReadonly1048<DeepRequired1048<PartialBig1048>>;
+type EV_1048 = Val_1048<Entity_10_48>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion1048 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_10_48 {
+  entities: Map<string, Entity_10_48>;
+  validators: EV_1048;
+  paths: Set<EP_1048>;
+  merged: DeepMerge_1048<Entity_10_48, { extra1048: string }>;
+}
 
-type ExtractAlpha1048 = Extract<BigUnion1048, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu1048 = Exclude<BigUnion1048, "zulu">;
+type CK_1048 = `p10.t48.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA1048 { width: number; height: number; depth: number }
-interface ShapeB1048 { color: string; opacity: number; blend: string }
-interface ShapeC1048 { x: number; y: number; z: number; w: number }
-interface ShapeD1048 { label: string; title: string; summary: string }
-
-type Combined1048 = ShapeA1048 & ShapeB1048 & ShapeC1048 & ShapeD1048;
-type OptionalAll1048 = { [K in keyof Combined1048]?: Combined1048[K] };
-type RequiredAll1048 = { [K in keyof Combined1048]-?: Combined1048[K] };
-type ReadonlyAll1048 = { readonly [K in keyof Combined1048]: Combined1048[K] };
-type NullableAll1048 = { [K in keyof Combined1048]: Combined1048[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString1048<T> = T extends string ? true : false;
-type IsNumber1048<T> = T extends number ? true : false;
-type TypeName1048<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames1048 = {
-  [K in keyof BigRecord1048]: TypeName1048<BigRecord1048[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb1048 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource1048 = "user" | "post" | "comment" | "tag" | "category";
-type Action1048 = `${Verb1048}_${Resource1048}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise1048<T> = T extends Promise<infer U> ? UnwrapPromise1048<U> : T;
-type UnwrapArray1048<T> = T extends (infer U)[] ? UnwrapArray1048<U> : T;
-type Head1048<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail1048<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation1048<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation1048<Exclude<T, K>>]
-  : never;
-
-type SmallUnion1048 = "a" | "b" | "c" | "d";
-type AllPerms1048 = Permutation1048<SmallUnion1048>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig1048,
-  Flat1048,
-  FR1048,
-  BigUnion1048,
-  ExtractAlpha1048,
-  ExcludeZulu1048,
-  OptionalAll1048,
-  RequiredAll1048,
-  ReadonlyAll1048,
-  NullableAll1048,
-  TypeNames1048,
-  Action1048,
-  AllPerms1048,
-};
+export type { Entity_10_48, Registry_10_48, CK_1048, EP_1048, EV_1048, DeepMerge_1048 };

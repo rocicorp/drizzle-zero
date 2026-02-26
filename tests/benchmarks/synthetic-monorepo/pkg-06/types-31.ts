@@ -1,125 +1,50 @@
-// pkg-06 / types-31  (seed 631) - expensive recursive & mapped types
+// pkg-06/types-31 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_5_01, Registry_5_01 } from '../pkg-05/types-01';
+import type { Entity_5_10, Registry_5_10 } from '../pkg-05/types-10';
+import type { Entity_5_20, Registry_5_20 } from '../pkg-05/types-20';
+import type { Entity_4_01, Registry_4_01 } from '../pkg-04/types-01';
+import type { Entity_4_10, Registry_4_10 } from '../pkg-04/types-10';
+import type { Entity_4_20, Registry_4_20 } from '../pkg-04/types-20';
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+
+type DeepMerge_0631<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0631<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord631 {
-  a631: { x: number; y: string; z: boolean };
-  b631: { p: string[]; q: Record<string, number> };
-  c631: { nested: { deep: { deeper: { deepest: string } } } };
-  d631: number;
-  e631: string;
-  f631: boolean;
-  g631: null;
-  h631: undefined;
-  i631: bigint;
-  j631: symbol;
+interface Entity_06_31 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_06_31 | null; children: Entity_06_31[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d31: { x0631: number; y0631: string; z0631: boolean };
 }
 
-type PartialBig631 = DeepPartial<BigRecord631>;
+type Path_0631<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0631<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0631 = Path_0631<Entity_06_31>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten631<T> = T extends Array<infer U> ? Flatten631<U> : T;
-type Nested631 = number[][][][][][][][][][];
-type Flat631 = Flatten631<Nested631>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly631<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly631<T[K]> : T[K];
+type Val_0631<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0631<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0631<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired631<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired631<T[K]> : T[K];
-};
-type FR631 = DeepReadonly631<DeepRequired631<PartialBig631>>;
+type EV_0631 = Val_0631<Entity_06_31>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion631 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_06_31 {
+  entities: Map<string, Entity_06_31>;
+  validators: EV_0631;
+  paths: Set<EP_0631>;
+  merged: DeepMerge_0631<Entity_06_31, { extra0631: string }>;
+}
 
-type ExtractAlpha631 = Extract<BigUnion631, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu631 = Exclude<BigUnion631, "zulu">;
+type CK_0631 = `p06.t31.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA631 { width: number; height: number; depth: number }
-interface ShapeB631 { color: string; opacity: number; blend: string }
-interface ShapeC631 { x: number; y: number; z: number; w: number }
-interface ShapeD631 { label: string; title: string; summary: string }
-
-type Combined631 = ShapeA631 & ShapeB631 & ShapeC631 & ShapeD631;
-type OptionalAll631 = { [K in keyof Combined631]?: Combined631[K] };
-type RequiredAll631 = { [K in keyof Combined631]-?: Combined631[K] };
-type ReadonlyAll631 = { readonly [K in keyof Combined631]: Combined631[K] };
-type NullableAll631 = { [K in keyof Combined631]: Combined631[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString631<T> = T extends string ? true : false;
-type IsNumber631<T> = T extends number ? true : false;
-type TypeName631<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames631 = {
-  [K in keyof BigRecord631]: TypeName631<BigRecord631[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb631 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource631 = "user" | "post" | "comment" | "tag" | "category";
-type Action631 = `${Verb631}_${Resource631}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise631<T> = T extends Promise<infer U> ? UnwrapPromise631<U> : T;
-type UnwrapArray631<T> = T extends (infer U)[] ? UnwrapArray631<U> : T;
-type Head631<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail631<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation631<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation631<Exclude<T, K>>]
-  : never;
-
-type SmallUnion631 = "a" | "b" | "c" | "d";
-type AllPerms631 = Permutation631<SmallUnion631>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig631,
-  Flat631,
-  FR631,
-  BigUnion631,
-  ExtractAlpha631,
-  ExcludeZulu631,
-  OptionalAll631,
-  RequiredAll631,
-  ReadonlyAll631,
-  NullableAll631,
-  TypeNames631,
-  Action631,
-  AllPerms631,
-};
+export type { Entity_06_31, Registry_06_31, CK_0631, EP_0631, EV_0631, DeepMerge_0631 };

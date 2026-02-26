@@ -1,125 +1,47 @@
-// pkg-03 / types-13  (seed 313) - expensive recursive & mapped types
+// pkg-03/types-13 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_2_01, Registry_2_01 } from '../pkg-02/types-01';
+import type { Entity_2_10, Registry_2_10 } from '../pkg-02/types-10';
+import type { Entity_2_20, Registry_2_20 } from '../pkg-02/types-20';
+import type { Entity_1_01, Registry_1_01 } from '../pkg-01/types-01';
+import type { Entity_1_10, Registry_1_10 } from '../pkg-01/types-10';
+import type { Entity_1_20, Registry_1_20 } from '../pkg-01/types-20';
+
+type DeepMerge_0313<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0313<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord313 {
-  a313: { x: number; y: string; z: boolean };
-  b313: { p: string[]; q: Record<string, number> };
-  c313: { nested: { deep: { deeper: { deepest: string } } } };
-  d313: number;
-  e313: string;
-  f313: boolean;
-  g313: null;
-  h313: undefined;
-  i313: bigint;
-  j313: symbol;
+interface Entity_03_13 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_03_13 | null; children: Entity_03_13[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d13: { x0313: number; y0313: string; z0313: boolean };
 }
 
-type PartialBig313 = DeepPartial<BigRecord313>;
+type Path_0313<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0313<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0313 = Path_0313<Entity_03_13>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten313<T> = T extends Array<infer U> ? Flatten313<U> : T;
-type Nested313 = number[][][][][][][][][][];
-type Flat313 = Flatten313<Nested313>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly313<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly313<T[K]> : T[K];
+type Val_0313<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0313<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0313<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired313<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired313<T[K]> : T[K];
-};
-type FR313 = DeepReadonly313<DeepRequired313<PartialBig313>>;
+type EV_0313 = Val_0313<Entity_03_13>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion313 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_03_13 {
+  entities: Map<string, Entity_03_13>;
+  validators: EV_0313;
+  paths: Set<EP_0313>;
+  merged: DeepMerge_0313<Entity_03_13, { extra0313: string }>;
+}
 
-type ExtractAlpha313 = Extract<BigUnion313, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu313 = Exclude<BigUnion313, "zulu">;
+type CK_0313 = `p03.t13.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA313 { width: number; height: number; depth: number }
-interface ShapeB313 { color: string; opacity: number; blend: string }
-interface ShapeC313 { x: number; y: number; z: number; w: number }
-interface ShapeD313 { label: string; title: string; summary: string }
-
-type Combined313 = ShapeA313 & ShapeB313 & ShapeC313 & ShapeD313;
-type OptionalAll313 = { [K in keyof Combined313]?: Combined313[K] };
-type RequiredAll313 = { [K in keyof Combined313]-?: Combined313[K] };
-type ReadonlyAll313 = { readonly [K in keyof Combined313]: Combined313[K] };
-type NullableAll313 = { [K in keyof Combined313]: Combined313[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString313<T> = T extends string ? true : false;
-type IsNumber313<T> = T extends number ? true : false;
-type TypeName313<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames313 = {
-  [K in keyof BigRecord313]: TypeName313<BigRecord313[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb313 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource313 = "user" | "post" | "comment" | "tag" | "category";
-type Action313 = `${Verb313}_${Resource313}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise313<T> = T extends Promise<infer U> ? UnwrapPromise313<U> : T;
-type UnwrapArray313<T> = T extends (infer U)[] ? UnwrapArray313<U> : T;
-type Head313<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail313<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation313<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation313<Exclude<T, K>>]
-  : never;
-
-type SmallUnion313 = "a" | "b" | "c" | "d";
-type AllPerms313 = Permutation313<SmallUnion313>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig313,
-  Flat313,
-  FR313,
-  BigUnion313,
-  ExtractAlpha313,
-  ExcludeZulu313,
-  OptionalAll313,
-  RequiredAll313,
-  ReadonlyAll313,
-  NullableAll313,
-  TypeNames313,
-  Action313,
-  AllPerms313,
-};
+export type { Entity_03_13, Registry_03_13, CK_0313, EP_0313, EV_0313, DeepMerge_0313 };

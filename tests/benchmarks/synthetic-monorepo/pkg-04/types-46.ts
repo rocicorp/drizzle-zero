@@ -1,125 +1,50 @@
-// pkg-04 / types-46  (seed 446) - expensive recursive & mapped types
+// pkg-04/types-46 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+import type { Entity_2_01, Registry_2_01 } from '../pkg-02/types-01';
+import type { Entity_2_10, Registry_2_10 } from '../pkg-02/types-10';
+import type { Entity_2_20, Registry_2_20 } from '../pkg-02/types-20';
+import type { Entity_1_01, Registry_1_01 } from '../pkg-01/types-01';
+import type { Entity_1_10, Registry_1_10 } from '../pkg-01/types-10';
+import type { Entity_1_20, Registry_1_20 } from '../pkg-01/types-20';
+
+type DeepMerge_0446<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0446<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord446 {
-  a446: { x: number; y: string; z: boolean };
-  b446: { p: string[]; q: Record<string, number> };
-  c446: { nested: { deep: { deeper: { deepest: string } } } };
-  d446: number;
-  e446: string;
-  f446: boolean;
-  g446: null;
-  h446: undefined;
-  i446: bigint;
-  j446: symbol;
+interface Entity_04_46 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_04_46 | null; children: Entity_04_46[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d46: { x0446: number; y0446: string; z0446: boolean };
 }
 
-type PartialBig446 = DeepPartial<BigRecord446>;
+type Path_0446<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0446<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0446 = Path_0446<Entity_04_46>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten446<T> = T extends Array<infer U> ? Flatten446<U> : T;
-type Nested446 = number[][][][][][][][][][];
-type Flat446 = Flatten446<Nested446>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly446<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly446<T[K]> : T[K];
+type Val_0446<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0446<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0446<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired446<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired446<T[K]> : T[K];
-};
-type FR446 = DeepReadonly446<DeepRequired446<PartialBig446>>;
+type EV_0446 = Val_0446<Entity_04_46>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion446 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_04_46 {
+  entities: Map<string, Entity_04_46>;
+  validators: EV_0446;
+  paths: Set<EP_0446>;
+  merged: DeepMerge_0446<Entity_04_46, { extra0446: string }>;
+}
 
-type ExtractAlpha446 = Extract<BigUnion446, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu446 = Exclude<BigUnion446, "zulu">;
+type CK_0446 = `p04.t46.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA446 { width: number; height: number; depth: number }
-interface ShapeB446 { color: string; opacity: number; blend: string }
-interface ShapeC446 { x: number; y: number; z: number; w: number }
-interface ShapeD446 { label: string; title: string; summary: string }
-
-type Combined446 = ShapeA446 & ShapeB446 & ShapeC446 & ShapeD446;
-type OptionalAll446 = { [K in keyof Combined446]?: Combined446[K] };
-type RequiredAll446 = { [K in keyof Combined446]-?: Combined446[K] };
-type ReadonlyAll446 = { readonly [K in keyof Combined446]: Combined446[K] };
-type NullableAll446 = { [K in keyof Combined446]: Combined446[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString446<T> = T extends string ? true : false;
-type IsNumber446<T> = T extends number ? true : false;
-type TypeName446<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames446 = {
-  [K in keyof BigRecord446]: TypeName446<BigRecord446[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb446 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource446 = "user" | "post" | "comment" | "tag" | "category";
-type Action446 = `${Verb446}_${Resource446}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise446<T> = T extends Promise<infer U> ? UnwrapPromise446<U> : T;
-type UnwrapArray446<T> = T extends (infer U)[] ? UnwrapArray446<U> : T;
-type Head446<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail446<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation446<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation446<Exclude<T, K>>]
-  : never;
-
-type SmallUnion446 = "a" | "b" | "c" | "d";
-type AllPerms446 = Permutation446<SmallUnion446>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig446,
-  Flat446,
-  FR446,
-  BigUnion446,
-  ExtractAlpha446,
-  ExcludeZulu446,
-  OptionalAll446,
-  RequiredAll446,
-  ReadonlyAll446,
-  NullableAll446,
-  TypeNames446,
-  Action446,
-  AllPerms446,
-};
+export type { Entity_04_46, Registry_04_46, CK_0446, EP_0446, EV_0446, DeepMerge_0446 };

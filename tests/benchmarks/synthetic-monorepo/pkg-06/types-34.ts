@@ -1,125 +1,50 @@
-// pkg-06 / types-34  (seed 634) - expensive recursive & mapped types
+// pkg-06/types-34 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_5_01, Registry_5_01 } from '../pkg-05/types-01';
+import type { Entity_5_10, Registry_5_10 } from '../pkg-05/types-10';
+import type { Entity_5_20, Registry_5_20 } from '../pkg-05/types-20';
+import type { Entity_4_01, Registry_4_01 } from '../pkg-04/types-01';
+import type { Entity_4_10, Registry_4_10 } from '../pkg-04/types-10';
+import type { Entity_4_20, Registry_4_20 } from '../pkg-04/types-20';
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+
+type DeepMerge_0634<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0634<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord634 {
-  a634: { x: number; y: string; z: boolean };
-  b634: { p: string[]; q: Record<string, number> };
-  c634: { nested: { deep: { deeper: { deepest: string } } } };
-  d634: number;
-  e634: string;
-  f634: boolean;
-  g634: null;
-  h634: undefined;
-  i634: bigint;
-  j634: symbol;
+interface Entity_06_34 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_06_34 | null; children: Entity_06_34[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d34: { x0634: number; y0634: string; z0634: boolean };
 }
 
-type PartialBig634 = DeepPartial<BigRecord634>;
+type Path_0634<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0634<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0634 = Path_0634<Entity_06_34>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten634<T> = T extends Array<infer U> ? Flatten634<U> : T;
-type Nested634 = number[][][][][][][][][][];
-type Flat634 = Flatten634<Nested634>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly634<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly634<T[K]> : T[K];
+type Val_0634<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0634<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0634<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired634<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired634<T[K]> : T[K];
-};
-type FR634 = DeepReadonly634<DeepRequired634<PartialBig634>>;
+type EV_0634 = Val_0634<Entity_06_34>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion634 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_06_34 {
+  entities: Map<string, Entity_06_34>;
+  validators: EV_0634;
+  paths: Set<EP_0634>;
+  merged: DeepMerge_0634<Entity_06_34, { extra0634: string }>;
+}
 
-type ExtractAlpha634 = Extract<BigUnion634, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu634 = Exclude<BigUnion634, "zulu">;
+type CK_0634 = `p06.t34.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA634 { width: number; height: number; depth: number }
-interface ShapeB634 { color: string; opacity: number; blend: string }
-interface ShapeC634 { x: number; y: number; z: number; w: number }
-interface ShapeD634 { label: string; title: string; summary: string }
-
-type Combined634 = ShapeA634 & ShapeB634 & ShapeC634 & ShapeD634;
-type OptionalAll634 = { [K in keyof Combined634]?: Combined634[K] };
-type RequiredAll634 = { [K in keyof Combined634]-?: Combined634[K] };
-type ReadonlyAll634 = { readonly [K in keyof Combined634]: Combined634[K] };
-type NullableAll634 = { [K in keyof Combined634]: Combined634[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString634<T> = T extends string ? true : false;
-type IsNumber634<T> = T extends number ? true : false;
-type TypeName634<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames634 = {
-  [K in keyof BigRecord634]: TypeName634<BigRecord634[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb634 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource634 = "user" | "post" | "comment" | "tag" | "category";
-type Action634 = `${Verb634}_${Resource634}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise634<T> = T extends Promise<infer U> ? UnwrapPromise634<U> : T;
-type UnwrapArray634<T> = T extends (infer U)[] ? UnwrapArray634<U> : T;
-type Head634<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail634<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation634<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation634<Exclude<T, K>>]
-  : never;
-
-type SmallUnion634 = "a" | "b" | "c" | "d";
-type AllPerms634 = Permutation634<SmallUnion634>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig634,
-  Flat634,
-  FR634,
-  BigUnion634,
-  ExtractAlpha634,
-  ExcludeZulu634,
-  OptionalAll634,
-  RequiredAll634,
-  ReadonlyAll634,
-  NullableAll634,
-  TypeNames634,
-  Action634,
-  AllPerms634,
-};
+export type { Entity_06_34, Registry_06_34, CK_0634, EP_0634, EV_0634, DeepMerge_0634 };

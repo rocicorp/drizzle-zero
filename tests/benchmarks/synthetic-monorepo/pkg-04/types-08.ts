@@ -1,125 +1,50 @@
-// pkg-04 / types-08  (seed 408) - expensive recursive & mapped types
+// pkg-04/types-08 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+import type { Entity_2_01, Registry_2_01 } from '../pkg-02/types-01';
+import type { Entity_2_10, Registry_2_10 } from '../pkg-02/types-10';
+import type { Entity_2_20, Registry_2_20 } from '../pkg-02/types-20';
+import type { Entity_1_01, Registry_1_01 } from '../pkg-01/types-01';
+import type { Entity_1_10, Registry_1_10 } from '../pkg-01/types-10';
+import type { Entity_1_20, Registry_1_20 } from '../pkg-01/types-20';
+
+type DeepMerge_0408<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0408<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord408 {
-  a408: { x: number; y: string; z: boolean };
-  b408: { p: string[]; q: Record<string, number> };
-  c408: { nested: { deep: { deeper: { deepest: string } } } };
-  d408: number;
-  e408: string;
-  f408: boolean;
-  g408: null;
-  h408: undefined;
-  i408: bigint;
-  j408: symbol;
+interface Entity_04_08 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_04_08 | null; children: Entity_04_08[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d08: { x0408: number; y0408: string; z0408: boolean };
 }
 
-type PartialBig408 = DeepPartial<BigRecord408>;
+type Path_0408<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0408<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0408 = Path_0408<Entity_04_08>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten408<T> = T extends Array<infer U> ? Flatten408<U> : T;
-type Nested408 = number[][][][][][][][][][];
-type Flat408 = Flatten408<Nested408>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly408<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly408<T[K]> : T[K];
+type Val_0408<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0408<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0408<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired408<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired408<T[K]> : T[K];
-};
-type FR408 = DeepReadonly408<DeepRequired408<PartialBig408>>;
+type EV_0408 = Val_0408<Entity_04_08>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion408 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_04_08 {
+  entities: Map<string, Entity_04_08>;
+  validators: EV_0408;
+  paths: Set<EP_0408>;
+  merged: DeepMerge_0408<Entity_04_08, { extra0408: string }>;
+}
 
-type ExtractAlpha408 = Extract<BigUnion408, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu408 = Exclude<BigUnion408, "zulu">;
+type CK_0408 = `p04.t08.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA408 { width: number; height: number; depth: number }
-interface ShapeB408 { color: string; opacity: number; blend: string }
-interface ShapeC408 { x: number; y: number; z: number; w: number }
-interface ShapeD408 { label: string; title: string; summary: string }
-
-type Combined408 = ShapeA408 & ShapeB408 & ShapeC408 & ShapeD408;
-type OptionalAll408 = { [K in keyof Combined408]?: Combined408[K] };
-type RequiredAll408 = { [K in keyof Combined408]-?: Combined408[K] };
-type ReadonlyAll408 = { readonly [K in keyof Combined408]: Combined408[K] };
-type NullableAll408 = { [K in keyof Combined408]: Combined408[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString408<T> = T extends string ? true : false;
-type IsNumber408<T> = T extends number ? true : false;
-type TypeName408<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames408 = {
-  [K in keyof BigRecord408]: TypeName408<BigRecord408[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb408 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource408 = "user" | "post" | "comment" | "tag" | "category";
-type Action408 = `${Verb408}_${Resource408}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise408<T> = T extends Promise<infer U> ? UnwrapPromise408<U> : T;
-type UnwrapArray408<T> = T extends (infer U)[] ? UnwrapArray408<U> : T;
-type Head408<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail408<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation408<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation408<Exclude<T, K>>]
-  : never;
-
-type SmallUnion408 = "a" | "b" | "c" | "d";
-type AllPerms408 = Permutation408<SmallUnion408>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig408,
-  Flat408,
-  FR408,
-  BigUnion408,
-  ExtractAlpha408,
-  ExcludeZulu408,
-  OptionalAll408,
-  RequiredAll408,
-  ReadonlyAll408,
-  NullableAll408,
-  TypeNames408,
-  Action408,
-  AllPerms408,
-};
+export type { Entity_04_08, Registry_04_08, CK_0408, EP_0408, EV_0408, DeepMerge_0408 };

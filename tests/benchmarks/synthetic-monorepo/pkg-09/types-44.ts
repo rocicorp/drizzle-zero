@@ -1,125 +1,50 @@
-// pkg-09 / types-44  (seed 944) - expensive recursive & mapped types
+// pkg-09/types-44 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_8_01, Registry_8_01 } from '../pkg-08/types-01';
+import type { Entity_8_10, Registry_8_10 } from '../pkg-08/types-10';
+import type { Entity_8_20, Registry_8_20 } from '../pkg-08/types-20';
+import type { Entity_7_01, Registry_7_01 } from '../pkg-07/types-01';
+import type { Entity_7_10, Registry_7_10 } from '../pkg-07/types-10';
+import type { Entity_7_20, Registry_7_20 } from '../pkg-07/types-20';
+import type { Entity_6_01, Registry_6_01 } from '../pkg-06/types-01';
+import type { Entity_6_10, Registry_6_10 } from '../pkg-06/types-10';
+import type { Entity_6_20, Registry_6_20 } from '../pkg-06/types-20';
+
+type DeepMerge_0944<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0944<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord944 {
-  a944: { x: number; y: string; z: boolean };
-  b944: { p: string[]; q: Record<string, number> };
-  c944: { nested: { deep: { deeper: { deepest: string } } } };
-  d944: number;
-  e944: string;
-  f944: boolean;
-  g944: null;
-  h944: undefined;
-  i944: bigint;
-  j944: symbol;
+interface Entity_09_44 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_09_44 | null; children: Entity_09_44[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d44: { x0944: number; y0944: string; z0944: boolean };
 }
 
-type PartialBig944 = DeepPartial<BigRecord944>;
+type Path_0944<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0944<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0944 = Path_0944<Entity_09_44>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten944<T> = T extends Array<infer U> ? Flatten944<U> : T;
-type Nested944 = number[][][][][][][][][][];
-type Flat944 = Flatten944<Nested944>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly944<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly944<T[K]> : T[K];
+type Val_0944<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0944<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0944<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired944<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired944<T[K]> : T[K];
-};
-type FR944 = DeepReadonly944<DeepRequired944<PartialBig944>>;
+type EV_0944 = Val_0944<Entity_09_44>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion944 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_09_44 {
+  entities: Map<string, Entity_09_44>;
+  validators: EV_0944;
+  paths: Set<EP_0944>;
+  merged: DeepMerge_0944<Entity_09_44, { extra0944: string }>;
+}
 
-type ExtractAlpha944 = Extract<BigUnion944, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu944 = Exclude<BigUnion944, "zulu">;
+type CK_0944 = `p09.t44.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA944 { width: number; height: number; depth: number }
-interface ShapeB944 { color: string; opacity: number; blend: string }
-interface ShapeC944 { x: number; y: number; z: number; w: number }
-interface ShapeD944 { label: string; title: string; summary: string }
-
-type Combined944 = ShapeA944 & ShapeB944 & ShapeC944 & ShapeD944;
-type OptionalAll944 = { [K in keyof Combined944]?: Combined944[K] };
-type RequiredAll944 = { [K in keyof Combined944]-?: Combined944[K] };
-type ReadonlyAll944 = { readonly [K in keyof Combined944]: Combined944[K] };
-type NullableAll944 = { [K in keyof Combined944]: Combined944[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString944<T> = T extends string ? true : false;
-type IsNumber944<T> = T extends number ? true : false;
-type TypeName944<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames944 = {
-  [K in keyof BigRecord944]: TypeName944<BigRecord944[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb944 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource944 = "user" | "post" | "comment" | "tag" | "category";
-type Action944 = `${Verb944}_${Resource944}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise944<T> = T extends Promise<infer U> ? UnwrapPromise944<U> : T;
-type UnwrapArray944<T> = T extends (infer U)[] ? UnwrapArray944<U> : T;
-type Head944<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail944<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation944<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation944<Exclude<T, K>>]
-  : never;
-
-type SmallUnion944 = "a" | "b" | "c" | "d";
-type AllPerms944 = Permutation944<SmallUnion944>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig944,
-  Flat944,
-  FR944,
-  BigUnion944,
-  ExtractAlpha944,
-  ExcludeZulu944,
-  OptionalAll944,
-  RequiredAll944,
-  ReadonlyAll944,
-  NullableAll944,
-  TypeNames944,
-  Action944,
-  AllPerms944,
-};
+export type { Entity_09_44, Registry_09_44, CK_0944, EP_0944, EV_0944, DeepMerge_0944 };

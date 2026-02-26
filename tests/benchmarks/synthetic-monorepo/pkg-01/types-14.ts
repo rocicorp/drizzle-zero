@@ -1,125 +1,41 @@
-// pkg-01 / types-14  (seed 114) - expensive recursive & mapped types
+// pkg-01/types-14 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+
+type DeepMerge_0114<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0114<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord114 {
-  a114: { x: number; y: string; z: boolean };
-  b114: { p: string[]; q: Record<string, number> };
-  c114: { nested: { deep: { deeper: { deepest: string } } } };
-  d114: number;
-  e114: string;
-  f114: boolean;
-  g114: null;
-  h114: undefined;
-  i114: bigint;
-  j114: symbol;
+interface Entity_01_14 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_01_14 | null; children: Entity_01_14[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d14: { x0114: number; y0114: string; z0114: boolean };
 }
 
-type PartialBig114 = DeepPartial<BigRecord114>;
+type Path_0114<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0114<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0114 = Path_0114<Entity_01_14>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten114<T> = T extends Array<infer U> ? Flatten114<U> : T;
-type Nested114 = number[][][][][][][][][][];
-type Flat114 = Flatten114<Nested114>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly114<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly114<T[K]> : T[K];
+type Val_0114<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0114<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0114<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired114<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired114<T[K]> : T[K];
-};
-type FR114 = DeepReadonly114<DeepRequired114<PartialBig114>>;
+type EV_0114 = Val_0114<Entity_01_14>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion114 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_01_14 {
+  entities: Map<string, Entity_01_14>;
+  validators: EV_0114;
+  paths: Set<EP_0114>;
+  merged: DeepMerge_0114<Entity_01_14, { extra0114: string }>;
+}
 
-type ExtractAlpha114 = Extract<BigUnion114, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu114 = Exclude<BigUnion114, "zulu">;
+type CK_0114 = `p01.t14.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA114 { width: number; height: number; depth: number }
-interface ShapeB114 { color: string; opacity: number; blend: string }
-interface ShapeC114 { x: number; y: number; z: number; w: number }
-interface ShapeD114 { label: string; title: string; summary: string }
-
-type Combined114 = ShapeA114 & ShapeB114 & ShapeC114 & ShapeD114;
-type OptionalAll114 = { [K in keyof Combined114]?: Combined114[K] };
-type RequiredAll114 = { [K in keyof Combined114]-?: Combined114[K] };
-type ReadonlyAll114 = { readonly [K in keyof Combined114]: Combined114[K] };
-type NullableAll114 = { [K in keyof Combined114]: Combined114[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString114<T> = T extends string ? true : false;
-type IsNumber114<T> = T extends number ? true : false;
-type TypeName114<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames114 = {
-  [K in keyof BigRecord114]: TypeName114<BigRecord114[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb114 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource114 = "user" | "post" | "comment" | "tag" | "category";
-type Action114 = `${Verb114}_${Resource114}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise114<T> = T extends Promise<infer U> ? UnwrapPromise114<U> : T;
-type UnwrapArray114<T> = T extends (infer U)[] ? UnwrapArray114<U> : T;
-type Head114<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail114<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation114<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation114<Exclude<T, K>>]
-  : never;
-
-type SmallUnion114 = "a" | "b" | "c" | "d";
-type AllPerms114 = Permutation114<SmallUnion114>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig114,
-  Flat114,
-  FR114,
-  BigUnion114,
-  ExtractAlpha114,
-  ExcludeZulu114,
-  OptionalAll114,
-  RequiredAll114,
-  ReadonlyAll114,
-  NullableAll114,
-  TypeNames114,
-  Action114,
-  AllPerms114,
-};
+export type { Entity_01_14, Registry_01_14, CK_0114, EP_0114, EV_0114, DeepMerge_0114 };

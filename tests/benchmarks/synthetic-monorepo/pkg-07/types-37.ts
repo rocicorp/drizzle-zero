@@ -1,125 +1,50 @@
-// pkg-07 / types-37  (seed 737) - expensive recursive & mapped types
+// pkg-07/types-37 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_6_01, Registry_6_01 } from '../pkg-06/types-01';
+import type { Entity_6_10, Registry_6_10 } from '../pkg-06/types-10';
+import type { Entity_6_20, Registry_6_20 } from '../pkg-06/types-20';
+import type { Entity_5_01, Registry_5_01 } from '../pkg-05/types-01';
+import type { Entity_5_10, Registry_5_10 } from '../pkg-05/types-10';
+import type { Entity_5_20, Registry_5_20 } from '../pkg-05/types-20';
+import type { Entity_4_01, Registry_4_01 } from '../pkg-04/types-01';
+import type { Entity_4_10, Registry_4_10 } from '../pkg-04/types-10';
+import type { Entity_4_20, Registry_4_20 } from '../pkg-04/types-20';
+
+type DeepMerge_0737<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0737<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord737 {
-  a737: { x: number; y: string; z: boolean };
-  b737: { p: string[]; q: Record<string, number> };
-  c737: { nested: { deep: { deeper: { deepest: string } } } };
-  d737: number;
-  e737: string;
-  f737: boolean;
-  g737: null;
-  h737: undefined;
-  i737: bigint;
-  j737: symbol;
+interface Entity_07_37 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_07_37 | null; children: Entity_07_37[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d37: { x0737: number; y0737: string; z0737: boolean };
 }
 
-type PartialBig737 = DeepPartial<BigRecord737>;
+type Path_0737<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0737<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0737 = Path_0737<Entity_07_37>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten737<T> = T extends Array<infer U> ? Flatten737<U> : T;
-type Nested737 = number[][][][][][][][][][];
-type Flat737 = Flatten737<Nested737>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly737<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly737<T[K]> : T[K];
+type Val_0737<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0737<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0737<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired737<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired737<T[K]> : T[K];
-};
-type FR737 = DeepReadonly737<DeepRequired737<PartialBig737>>;
+type EV_0737 = Val_0737<Entity_07_37>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion737 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_07_37 {
+  entities: Map<string, Entity_07_37>;
+  validators: EV_0737;
+  paths: Set<EP_0737>;
+  merged: DeepMerge_0737<Entity_07_37, { extra0737: string }>;
+}
 
-type ExtractAlpha737 = Extract<BigUnion737, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu737 = Exclude<BigUnion737, "zulu">;
+type CK_0737 = `p07.t37.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA737 { width: number; height: number; depth: number }
-interface ShapeB737 { color: string; opacity: number; blend: string }
-interface ShapeC737 { x: number; y: number; z: number; w: number }
-interface ShapeD737 { label: string; title: string; summary: string }
-
-type Combined737 = ShapeA737 & ShapeB737 & ShapeC737 & ShapeD737;
-type OptionalAll737 = { [K in keyof Combined737]?: Combined737[K] };
-type RequiredAll737 = { [K in keyof Combined737]-?: Combined737[K] };
-type ReadonlyAll737 = { readonly [K in keyof Combined737]: Combined737[K] };
-type NullableAll737 = { [K in keyof Combined737]: Combined737[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString737<T> = T extends string ? true : false;
-type IsNumber737<T> = T extends number ? true : false;
-type TypeName737<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames737 = {
-  [K in keyof BigRecord737]: TypeName737<BigRecord737[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb737 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource737 = "user" | "post" | "comment" | "tag" | "category";
-type Action737 = `${Verb737}_${Resource737}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise737<T> = T extends Promise<infer U> ? UnwrapPromise737<U> : T;
-type UnwrapArray737<T> = T extends (infer U)[] ? UnwrapArray737<U> : T;
-type Head737<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail737<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation737<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation737<Exclude<T, K>>]
-  : never;
-
-type SmallUnion737 = "a" | "b" | "c" | "d";
-type AllPerms737 = Permutation737<SmallUnion737>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig737,
-  Flat737,
-  FR737,
-  BigUnion737,
-  ExtractAlpha737,
-  ExcludeZulu737,
-  OptionalAll737,
-  RequiredAll737,
-  ReadonlyAll737,
-  NullableAll737,
-  TypeNames737,
-  Action737,
-  AllPerms737,
-};
+export type { Entity_07_37, Registry_07_37, CK_0737, EP_0737, EV_0737, DeepMerge_0737 };

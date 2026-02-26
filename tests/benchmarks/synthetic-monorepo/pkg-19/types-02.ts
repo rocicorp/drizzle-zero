@@ -1,0 +1,50 @@
+// pkg-19/types-02 - heavy interconnected types
+
+import type { Entity_18_01, Registry_18_01 } from '../pkg-18/types-01';
+import type { Entity_18_10, Registry_18_10 } from '../pkg-18/types-10';
+import type { Entity_18_20, Registry_18_20 } from '../pkg-18/types-20';
+import type { Entity_17_01, Registry_17_01 } from '../pkg-17/types-01';
+import type { Entity_17_10, Registry_17_10 } from '../pkg-17/types-10';
+import type { Entity_17_20, Registry_17_20 } from '../pkg-17/types-20';
+import type { Entity_16_01, Registry_16_01 } from '../pkg-16/types-01';
+import type { Entity_16_10, Registry_16_10 } from '../pkg-16/types-10';
+import type { Entity_16_20, Registry_16_20 } from '../pkg-16/types-20';
+
+type DeepMerge_1902<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_1902<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
+};
+
+interface Entity_19_02 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_19_02 | null; children: Entity_19_02[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d02: { x1902: number; y1902: string; z1902: boolean };
+}
+
+type Path_1902<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_1902<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_1902 = Path_1902<Entity_19_02>;
+
+type Val_1902<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_1902<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_1902<T[K]> }
+    : { t: 'u' };
+};
+type EV_1902 = Val_1902<Entity_19_02>;
+
+interface Registry_19_02 {
+  entities: Map<string, Entity_19_02>;
+  validators: EV_1902;
+  paths: Set<EP_1902>;
+  merged: DeepMerge_1902<Entity_19_02, { extra1902: string }>;
+}
+
+type CK_1902 = `p19.t02.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
+
+export type { Entity_19_02, Registry_19_02, CK_1902, EP_1902, EV_1902, DeepMerge_1902 };

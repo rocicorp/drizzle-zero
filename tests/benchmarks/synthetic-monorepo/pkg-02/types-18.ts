@@ -1,125 +1,44 @@
-// pkg-02 / types-18  (seed 218) - expensive recursive & mapped types
+// pkg-02/types-18 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_1_01, Registry_1_01 } from '../pkg-01/types-01';
+import type { Entity_1_10, Registry_1_10 } from '../pkg-01/types-10';
+import type { Entity_1_20, Registry_1_20 } from '../pkg-01/types-20';
+
+type DeepMerge_0218<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0218<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord218 {
-  a218: { x: number; y: string; z: boolean };
-  b218: { p: string[]; q: Record<string, number> };
-  c218: { nested: { deep: { deeper: { deepest: string } } } };
-  d218: number;
-  e218: string;
-  f218: boolean;
-  g218: null;
-  h218: undefined;
-  i218: bigint;
-  j218: symbol;
+interface Entity_02_18 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_02_18 | null; children: Entity_02_18[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d18: { x0218: number; y0218: string; z0218: boolean };
 }
 
-type PartialBig218 = DeepPartial<BigRecord218>;
+type Path_0218<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0218<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0218 = Path_0218<Entity_02_18>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten218<T> = T extends Array<infer U> ? Flatten218<U> : T;
-type Nested218 = number[][][][][][][][][][];
-type Flat218 = Flatten218<Nested218>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly218<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly218<T[K]> : T[K];
+type Val_0218<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0218<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0218<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired218<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired218<T[K]> : T[K];
-};
-type FR218 = DeepReadonly218<DeepRequired218<PartialBig218>>;
+type EV_0218 = Val_0218<Entity_02_18>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion218 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_02_18 {
+  entities: Map<string, Entity_02_18>;
+  validators: EV_0218;
+  paths: Set<EP_0218>;
+  merged: DeepMerge_0218<Entity_02_18, { extra0218: string }>;
+}
 
-type ExtractAlpha218 = Extract<BigUnion218, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu218 = Exclude<BigUnion218, "zulu">;
+type CK_0218 = `p02.t18.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA218 { width: number; height: number; depth: number }
-interface ShapeB218 { color: string; opacity: number; blend: string }
-interface ShapeC218 { x: number; y: number; z: number; w: number }
-interface ShapeD218 { label: string; title: string; summary: string }
-
-type Combined218 = ShapeA218 & ShapeB218 & ShapeC218 & ShapeD218;
-type OptionalAll218 = { [K in keyof Combined218]?: Combined218[K] };
-type RequiredAll218 = { [K in keyof Combined218]-?: Combined218[K] };
-type ReadonlyAll218 = { readonly [K in keyof Combined218]: Combined218[K] };
-type NullableAll218 = { [K in keyof Combined218]: Combined218[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString218<T> = T extends string ? true : false;
-type IsNumber218<T> = T extends number ? true : false;
-type TypeName218<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames218 = {
-  [K in keyof BigRecord218]: TypeName218<BigRecord218[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb218 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource218 = "user" | "post" | "comment" | "tag" | "category";
-type Action218 = `${Verb218}_${Resource218}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise218<T> = T extends Promise<infer U> ? UnwrapPromise218<U> : T;
-type UnwrapArray218<T> = T extends (infer U)[] ? UnwrapArray218<U> : T;
-type Head218<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail218<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation218<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation218<Exclude<T, K>>]
-  : never;
-
-type SmallUnion218 = "a" | "b" | "c" | "d";
-type AllPerms218 = Permutation218<SmallUnion218>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig218,
-  Flat218,
-  FR218,
-  BigUnion218,
-  ExtractAlpha218,
-  ExcludeZulu218,
-  OptionalAll218,
-  RequiredAll218,
-  ReadonlyAll218,
-  NullableAll218,
-  TypeNames218,
-  Action218,
-  AllPerms218,
-};
+export type { Entity_02_18, Registry_02_18, CK_0218, EP_0218, EV_0218, DeepMerge_0218 };

@@ -1,125 +1,50 @@
-// pkg-09 / types-16  (seed 916) - expensive recursive & mapped types
+// pkg-09/types-16 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_8_01, Registry_8_01 } from '../pkg-08/types-01';
+import type { Entity_8_10, Registry_8_10 } from '../pkg-08/types-10';
+import type { Entity_8_20, Registry_8_20 } from '../pkg-08/types-20';
+import type { Entity_7_01, Registry_7_01 } from '../pkg-07/types-01';
+import type { Entity_7_10, Registry_7_10 } from '../pkg-07/types-10';
+import type { Entity_7_20, Registry_7_20 } from '../pkg-07/types-20';
+import type { Entity_6_01, Registry_6_01 } from '../pkg-06/types-01';
+import type { Entity_6_10, Registry_6_10 } from '../pkg-06/types-10';
+import type { Entity_6_20, Registry_6_20 } from '../pkg-06/types-20';
+
+type DeepMerge_0916<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0916<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord916 {
-  a916: { x: number; y: string; z: boolean };
-  b916: { p: string[]; q: Record<string, number> };
-  c916: { nested: { deep: { deeper: { deepest: string } } } };
-  d916: number;
-  e916: string;
-  f916: boolean;
-  g916: null;
-  h916: undefined;
-  i916: bigint;
-  j916: symbol;
+interface Entity_09_16 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_09_16 | null; children: Entity_09_16[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d16: { x0916: number; y0916: string; z0916: boolean };
 }
 
-type PartialBig916 = DeepPartial<BigRecord916>;
+type Path_0916<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0916<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0916 = Path_0916<Entity_09_16>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten916<T> = T extends Array<infer U> ? Flatten916<U> : T;
-type Nested916 = number[][][][][][][][][][];
-type Flat916 = Flatten916<Nested916>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly916<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly916<T[K]> : T[K];
+type Val_0916<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0916<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0916<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired916<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired916<T[K]> : T[K];
-};
-type FR916 = DeepReadonly916<DeepRequired916<PartialBig916>>;
+type EV_0916 = Val_0916<Entity_09_16>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion916 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_09_16 {
+  entities: Map<string, Entity_09_16>;
+  validators: EV_0916;
+  paths: Set<EP_0916>;
+  merged: DeepMerge_0916<Entity_09_16, { extra0916: string }>;
+}
 
-type ExtractAlpha916 = Extract<BigUnion916, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu916 = Exclude<BigUnion916, "zulu">;
+type CK_0916 = `p09.t16.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA916 { width: number; height: number; depth: number }
-interface ShapeB916 { color: string; opacity: number; blend: string }
-interface ShapeC916 { x: number; y: number; z: number; w: number }
-interface ShapeD916 { label: string; title: string; summary: string }
-
-type Combined916 = ShapeA916 & ShapeB916 & ShapeC916 & ShapeD916;
-type OptionalAll916 = { [K in keyof Combined916]?: Combined916[K] };
-type RequiredAll916 = { [K in keyof Combined916]-?: Combined916[K] };
-type ReadonlyAll916 = { readonly [K in keyof Combined916]: Combined916[K] };
-type NullableAll916 = { [K in keyof Combined916]: Combined916[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString916<T> = T extends string ? true : false;
-type IsNumber916<T> = T extends number ? true : false;
-type TypeName916<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames916 = {
-  [K in keyof BigRecord916]: TypeName916<BigRecord916[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb916 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource916 = "user" | "post" | "comment" | "tag" | "category";
-type Action916 = `${Verb916}_${Resource916}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise916<T> = T extends Promise<infer U> ? UnwrapPromise916<U> : T;
-type UnwrapArray916<T> = T extends (infer U)[] ? UnwrapArray916<U> : T;
-type Head916<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail916<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation916<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation916<Exclude<T, K>>]
-  : never;
-
-type SmallUnion916 = "a" | "b" | "c" | "d";
-type AllPerms916 = Permutation916<SmallUnion916>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig916,
-  Flat916,
-  FR916,
-  BigUnion916,
-  ExtractAlpha916,
-  ExcludeZulu916,
-  OptionalAll916,
-  RequiredAll916,
-  ReadonlyAll916,
-  NullableAll916,
-  TypeNames916,
-  Action916,
-  AllPerms916,
-};
+export type { Entity_09_16, Registry_09_16, CK_0916, EP_0916, EV_0916, DeepMerge_0916 };

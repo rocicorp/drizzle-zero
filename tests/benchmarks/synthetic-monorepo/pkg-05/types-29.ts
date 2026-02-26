@@ -1,125 +1,50 @@
-// pkg-05 / types-29  (seed 529) - expensive recursive & mapped types
+// pkg-05/types-29 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_4_01, Registry_4_01 } from '../pkg-04/types-01';
+import type { Entity_4_10, Registry_4_10 } from '../pkg-04/types-10';
+import type { Entity_4_20, Registry_4_20 } from '../pkg-04/types-20';
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+import type { Entity_2_01, Registry_2_01 } from '../pkg-02/types-01';
+import type { Entity_2_10, Registry_2_10 } from '../pkg-02/types-10';
+import type { Entity_2_20, Registry_2_20 } from '../pkg-02/types-20';
+
+type DeepMerge_0529<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0529<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord529 {
-  a529: { x: number; y: string; z: boolean };
-  b529: { p: string[]; q: Record<string, number> };
-  c529: { nested: { deep: { deeper: { deepest: string } } } };
-  d529: number;
-  e529: string;
-  f529: boolean;
-  g529: null;
-  h529: undefined;
-  i529: bigint;
-  j529: symbol;
+interface Entity_05_29 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_05_29 | null; children: Entity_05_29[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d29: { x0529: number; y0529: string; z0529: boolean };
 }
 
-type PartialBig529 = DeepPartial<BigRecord529>;
+type Path_0529<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0529<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0529 = Path_0529<Entity_05_29>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten529<T> = T extends Array<infer U> ? Flatten529<U> : T;
-type Nested529 = number[][][][][][][][][][];
-type Flat529 = Flatten529<Nested529>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly529<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly529<T[K]> : T[K];
+type Val_0529<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0529<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0529<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired529<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired529<T[K]> : T[K];
-};
-type FR529 = DeepReadonly529<DeepRequired529<PartialBig529>>;
+type EV_0529 = Val_0529<Entity_05_29>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion529 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_05_29 {
+  entities: Map<string, Entity_05_29>;
+  validators: EV_0529;
+  paths: Set<EP_0529>;
+  merged: DeepMerge_0529<Entity_05_29, { extra0529: string }>;
+}
 
-type ExtractAlpha529 = Extract<BigUnion529, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu529 = Exclude<BigUnion529, "zulu">;
+type CK_0529 = `p05.t29.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA529 { width: number; height: number; depth: number }
-interface ShapeB529 { color: string; opacity: number; blend: string }
-interface ShapeC529 { x: number; y: number; z: number; w: number }
-interface ShapeD529 { label: string; title: string; summary: string }
-
-type Combined529 = ShapeA529 & ShapeB529 & ShapeC529 & ShapeD529;
-type OptionalAll529 = { [K in keyof Combined529]?: Combined529[K] };
-type RequiredAll529 = { [K in keyof Combined529]-?: Combined529[K] };
-type ReadonlyAll529 = { readonly [K in keyof Combined529]: Combined529[K] };
-type NullableAll529 = { [K in keyof Combined529]: Combined529[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString529<T> = T extends string ? true : false;
-type IsNumber529<T> = T extends number ? true : false;
-type TypeName529<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames529 = {
-  [K in keyof BigRecord529]: TypeName529<BigRecord529[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb529 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource529 = "user" | "post" | "comment" | "tag" | "category";
-type Action529 = `${Verb529}_${Resource529}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise529<T> = T extends Promise<infer U> ? UnwrapPromise529<U> : T;
-type UnwrapArray529<T> = T extends (infer U)[] ? UnwrapArray529<U> : T;
-type Head529<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail529<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation529<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation529<Exclude<T, K>>]
-  : never;
-
-type SmallUnion529 = "a" | "b" | "c" | "d";
-type AllPerms529 = Permutation529<SmallUnion529>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig529,
-  Flat529,
-  FR529,
-  BigUnion529,
-  ExtractAlpha529,
-  ExcludeZulu529,
-  OptionalAll529,
-  RequiredAll529,
-  ReadonlyAll529,
-  NullableAll529,
-  TypeNames529,
-  Action529,
-  AllPerms529,
-};
+export type { Entity_05_29, Registry_05_29, CK_0529, EP_0529, EV_0529, DeepMerge_0529 };

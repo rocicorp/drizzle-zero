@@ -1,125 +1,44 @@
-// pkg-02 / types-32  (seed 232) - expensive recursive & mapped types
+// pkg-02/types-32 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_1_01, Registry_1_01 } from '../pkg-01/types-01';
+import type { Entity_1_10, Registry_1_10 } from '../pkg-01/types-10';
+import type { Entity_1_20, Registry_1_20 } from '../pkg-01/types-20';
+
+type DeepMerge_0232<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0232<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord232 {
-  a232: { x: number; y: string; z: boolean };
-  b232: { p: string[]; q: Record<string, number> };
-  c232: { nested: { deep: { deeper: { deepest: string } } } };
-  d232: number;
-  e232: string;
-  f232: boolean;
-  g232: null;
-  h232: undefined;
-  i232: bigint;
-  j232: symbol;
+interface Entity_02_32 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_02_32 | null; children: Entity_02_32[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d32: { x0232: number; y0232: string; z0232: boolean };
 }
 
-type PartialBig232 = DeepPartial<BigRecord232>;
+type Path_0232<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0232<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0232 = Path_0232<Entity_02_32>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten232<T> = T extends Array<infer U> ? Flatten232<U> : T;
-type Nested232 = number[][][][][][][][][][];
-type Flat232 = Flatten232<Nested232>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly232<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly232<T[K]> : T[K];
+type Val_0232<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0232<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0232<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired232<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired232<T[K]> : T[K];
-};
-type FR232 = DeepReadonly232<DeepRequired232<PartialBig232>>;
+type EV_0232 = Val_0232<Entity_02_32>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion232 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_02_32 {
+  entities: Map<string, Entity_02_32>;
+  validators: EV_0232;
+  paths: Set<EP_0232>;
+  merged: DeepMerge_0232<Entity_02_32, { extra0232: string }>;
+}
 
-type ExtractAlpha232 = Extract<BigUnion232, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu232 = Exclude<BigUnion232, "zulu">;
+type CK_0232 = `p02.t32.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA232 { width: number; height: number; depth: number }
-interface ShapeB232 { color: string; opacity: number; blend: string }
-interface ShapeC232 { x: number; y: number; z: number; w: number }
-interface ShapeD232 { label: string; title: string; summary: string }
-
-type Combined232 = ShapeA232 & ShapeB232 & ShapeC232 & ShapeD232;
-type OptionalAll232 = { [K in keyof Combined232]?: Combined232[K] };
-type RequiredAll232 = { [K in keyof Combined232]-?: Combined232[K] };
-type ReadonlyAll232 = { readonly [K in keyof Combined232]: Combined232[K] };
-type NullableAll232 = { [K in keyof Combined232]: Combined232[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString232<T> = T extends string ? true : false;
-type IsNumber232<T> = T extends number ? true : false;
-type TypeName232<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames232 = {
-  [K in keyof BigRecord232]: TypeName232<BigRecord232[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb232 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource232 = "user" | "post" | "comment" | "tag" | "category";
-type Action232 = `${Verb232}_${Resource232}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise232<T> = T extends Promise<infer U> ? UnwrapPromise232<U> : T;
-type UnwrapArray232<T> = T extends (infer U)[] ? UnwrapArray232<U> : T;
-type Head232<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail232<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation232<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation232<Exclude<T, K>>]
-  : never;
-
-type SmallUnion232 = "a" | "b" | "c" | "d";
-type AllPerms232 = Permutation232<SmallUnion232>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig232,
-  Flat232,
-  FR232,
-  BigUnion232,
-  ExtractAlpha232,
-  ExcludeZulu232,
-  OptionalAll232,
-  RequiredAll232,
-  ReadonlyAll232,
-  NullableAll232,
-  TypeNames232,
-  Action232,
-  AllPerms232,
-};
+export type { Entity_02_32, Registry_02_32, CK_0232, EP_0232, EV_0232, DeepMerge_0232 };

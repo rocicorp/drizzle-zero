@@ -1,125 +1,50 @@
-// pkg-04 / types-16  (seed 416) - expensive recursive & mapped types
+// pkg-04/types-16 - heavy interconnected types
 
-// ── 1. DeepPartial over a large interface ────────────────────────────────────
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+import type { Entity_3_01, Registry_3_01 } from '../pkg-03/types-01';
+import type { Entity_3_10, Registry_3_10 } from '../pkg-03/types-10';
+import type { Entity_3_20, Registry_3_20 } from '../pkg-03/types-20';
+import type { Entity_2_01, Registry_2_01 } from '../pkg-02/types-01';
+import type { Entity_2_10, Registry_2_10 } from '../pkg-02/types-10';
+import type { Entity_2_20, Registry_2_20 } from '../pkg-02/types-20';
+import type { Entity_1_01, Registry_1_01 } from '../pkg-01/types-01';
+import type { Entity_1_10, Registry_1_10 } from '../pkg-01/types-10';
+import type { Entity_1_20, Registry_1_20 } from '../pkg-01/types-20';
+
+type DeepMerge_0416<T, U> = {
+  [K in keyof T | keyof U]: K extends keyof T & keyof U
+    ? T[K] extends object ? U[K] extends object ? DeepMerge_0416<T[K], U[K]> : U[K] : U[K]
+    : K extends keyof T ? T[K] : K extends keyof U ? U[K] : never;
 };
 
-interface BigRecord416 {
-  a416: { x: number; y: string; z: boolean };
-  b416: { p: string[]; q: Record<string, number> };
-  c416: { nested: { deep: { deeper: { deepest: string } } } };
-  d416: number;
-  e416: string;
-  f416: boolean;
-  g416: null;
-  h416: undefined;
-  i416: bigint;
-  j416: symbol;
+interface Entity_04_16 {
+  id: string;
+  meta: { created: Date; updated: Date; version: number; tags: string[]; attrs: Record<string, { v: unknown; t: string; ok: boolean }> };
+  rels: { parent: Entity_04_16 | null; children: Entity_04_16[]; };
+  cfg: { enabled: boolean; priority: number; rules: Array<{ cond: string; action: string; params: Record<string, unknown>; sub: { items: Array<{ id: string; w: number }> } }> };
+  d16: { x0416: number; y0416: string; z0416: boolean };
 }
 
-type PartialBig416 = DeepPartial<BigRecord416>;
+type Path_0416<T, D extends unknown[] = []> = D['length'] extends 6 ? never
+  : T extends object ? { [K in keyof T & string]: K | `${K}.${Path_0416<T[K], [...D, unknown]>}` }[keyof T & string] : never;
+type EP_0416 = Path_0416<Entity_04_16>;
 
-// ── 2. Recursive Flatten ─────────────────────────────────────────────────────
-type Flatten416<T> = T extends Array<infer U> ? Flatten416<U> : T;
-type Nested416 = number[][][][][][][][][][];
-type Flat416 = Flatten416<Nested416>;
-
-// ── 3. Deep readonly + required ──────────────────────────────────────────────
-type DeepReadonly416<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly416<T[K]> : T[K];
+type Val_0416<T> = {
+  [K in keyof T]: T[K] extends string ? { t: 's'; min: number; max: number }
+    : T[K] extends number ? { t: 'n'; min: number; max: number }
+    : T[K] extends boolean ? { t: 'b'; def: boolean }
+    : T[K] extends unknown[] ? { t: 'a'; items: Val_0416<T[K][number]> }
+    : T[K] extends object ? { t: 'o'; props: Val_0416<T[K]> }
+    : { t: 'u' };
 };
-type DeepRequired416<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired416<T[K]> : T[K];
-};
-type FR416 = DeepReadonly416<DeepRequired416<PartialBig416>>;
+type EV_0416 = Val_0416<Entity_04_16>;
 
-// ── 4. Large union type (50 members) ─────────────────────────────────────────
-type BigUnion416 =
-  | "alpha" | "bravo" | "charlie" | "delta" | "echo"
-  | "foxtrot" | "golf" | "hotel" | "india" | "juliet"
-  | "kilo" | "lima" | "mike" | "november" | "oscar"
-  | "papa" | "quebec" | "romeo" | "sierra" | "tango"
-  | "uniform" | "victor" | "whiskey" | "xray" | "yankee"
-  | "zulu" | "one" | "two" | "three" | "four"
-  | "five" | "six" | "seven" | "eight" | "nine"
-  | "ten" | "eleven" | "twelve" | "thirteen" | "fourteen"
-  | "fifteen" | "sixteen" | "seventeen" | "eighteen" | "nineteen"
-  | "twenty" | "twentyone" | "twentytwo" | "twentythree" | "twentyfour"
-  | "twentyfive";
+interface Registry_04_16 {
+  entities: Map<string, Entity_04_16>;
+  validators: EV_0416;
+  paths: Set<EP_0416>;
+  merged: DeepMerge_0416<Entity_04_16, { extra0416: string }>;
+}
 
-type ExtractAlpha416 = Extract<BigUnion416, "alpha" | "bravo" | "charlie">;
-type ExcludeZulu416 = Exclude<BigUnion416, "zulu">;
+type CK_0416 = `p04.t16.${'on' | 'off' | 'auto'}.${'dev' | 'stg' | 'prd'}.${'v1' | 'v2' | 'v3'}`;
 
-// ── 5. Mapped type over intersection of interfaces ───────────────────────────
-interface ShapeA416 { width: number; height: number; depth: number }
-interface ShapeB416 { color: string; opacity: number; blend: string }
-interface ShapeC416 { x: number; y: number; z: number; w: number }
-interface ShapeD416 { label: string; title: string; summary: string }
-
-type Combined416 = ShapeA416 & ShapeB416 & ShapeC416 & ShapeD416;
-type OptionalAll416 = { [K in keyof Combined416]?: Combined416[K] };
-type RequiredAll416 = { [K in keyof Combined416]-?: Combined416[K] };
-type ReadonlyAll416 = { readonly [K in keyof Combined416]: Combined416[K] };
-type NullableAll416 = { [K in keyof Combined416]: Combined416[K] | null };
-
-// ── 6. Conditional type chains ───────────────────────────────────────────────
-type IsString416<T> = T extends string ? true : false;
-type IsNumber416<T> = T extends number ? true : false;
-type TypeName416<T> = T extends string
-  ? "string"
-  : T extends number
-  ? "number"
-  : T extends boolean
-  ? "boolean"
-  : T extends null
-  ? "null"
-  : T extends undefined
-  ? "undefined"
-  : T extends symbol
-  ? "symbol"
-  : T extends bigint
-  ? "bigint"
-  : "object";
-
-type TypeNames416 = {
-  [K in keyof BigRecord416]: TypeName416<BigRecord416[K]>;
-};
-
-// ── 7. Template literal type combinations ────────────────────────────────────
-type Verb416 = "get" | "set" | "delete" | "update" | "create" | "list";
-type Resource416 = "user" | "post" | "comment" | "tag" | "category";
-type Action416 = `${Verb416}_${Resource416}`;
-
-// ── 8. Infer in conditional types ────────────────────────────────────────────
-type UnwrapPromise416<T> = T extends Promise<infer U> ? UnwrapPromise416<U> : T;
-type UnwrapArray416<T> = T extends (infer U)[] ? UnwrapArray416<U> : T;
-type Head416<T extends unknown[]> = T extends [infer H, ...infer _] ? H : never;
-type Tail416<T extends unknown[]> = T extends [infer _, ...infer R] ? R : never;
-
-// ── 9. Permutation of union ───────────────────────────────────────────────────
-type Permutation416<T, K = T> = [T] extends [never]
-  ? []
-  : K extends K
-  ? [K, ...Permutation416<Exclude<T, K>>]
-  : never;
-
-type SmallUnion416 = "a" | "b" | "c" | "d";
-type AllPerms416 = Permutation416<SmallUnion416>;
-
-// ── 10. Re-export to force inclusion ─────────────────────────────────────────
-export type {
-  PartialBig416,
-  Flat416,
-  FR416,
-  BigUnion416,
-  ExtractAlpha416,
-  ExcludeZulu416,
-  OptionalAll416,
-  RequiredAll416,
-  ReadonlyAll416,
-  NullableAll416,
-  TypeNames416,
-  Action416,
-  AllPerms416,
-};
+export type { Entity_04_16, Registry_04_16, CK_0416, EP_0416, EV_0416, DeepMerge_0416 };
