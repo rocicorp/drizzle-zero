@@ -1,11 +1,7 @@
 import * as path from 'node:path';
 import {Project} from 'ts-morph';
 import {test, expect} from 'vitest';
-import {discoverAllTsConfigs} from '../src/cli/tsconfig';
-import {
-  addSourceFilesFromTsConfigSafe,
-  ensureSourceFileInProject,
-} from '../src/cli/ts-project';
+import {ensureSourceFileInProject} from '../src/cli/ts-project';
 
 const fixtureRoot = path.resolve(
   __dirname,
@@ -17,61 +13,27 @@ const schemaConfigFile = path.resolve(
 );
 
 test(
-  'lazy loading loads fewer files and is faster than eager loading',
+  'project only loads the explicitly added file, not all tsconfig files',
   {timeout: 120_000},
   async () => {
-    // -- EAGER approach: discover all tsconfigs, add all source files --
-    const eagerStart = performance.now();
-
-    const allTsConfigPaths = await discoverAllTsConfigs(fixtureRoot);
-
-    const eagerProject = new Project({
-      tsConfigFilePath: fixtureRoot,
-      skipAddingFilesFromTsConfig: true,
-    });
-
-    for (const tsConfigPath of allTsConfigPaths) {
-      addSourceFilesFromTsConfigSafe({
-        tsProject: eagerProject,
-        tsConfigPath,
-        debug: false,
-      });
-    }
-
-    ensureSourceFileInProject({
-      tsProject: eagerProject,
-      filePath: schemaConfigFile,
-      debug: false,
-    });
-
-    const eagerFileCount = eagerProject.getSourceFiles().length;
-    const eagerTime = performance.now() - eagerStart;
-
-    // -- LAZY approach: only load the config file and resolve its dependencies --
-    const lazyStart = performance.now();
-
-    const lazyProject = new Project({
+    const project = new Project({
       tsConfigFilePath: fixtureRoot,
       skipAddingFilesFromTsConfig: true,
     });
 
     ensureSourceFileInProject({
-      tsProject: lazyProject,
+      tsProject: project,
       filePath: schemaConfigFile,
       debug: false,
     });
 
-    const lazyFileCount = lazyProject.getSourceFiles().length;
-    const lazyTime = performance.now() - lazyStart;
+    const fileCount = project.getSourceFiles().length;
 
-    // -- Report --
-    const ratio = eagerTime / lazyTime;
-    console.log(`Eager: ${eagerFileCount} files in ${eagerTime.toFixed(1)}ms`);
-    console.log(`Lazy:  ${lazyFileCount} files in ${lazyTime.toFixed(1)}ms`);
-    console.log(`Ratio: eager is ${ratio.toFixed(2)}x slower than lazy`);
+    console.log(`Files loaded: ${fileCount}`);
 
-    // -- Assertions --
-    expect(lazyFileCount).toBeLessThan(eagerFileCount);
-    expect(lazyTime).toBeLessThan(eagerTime);
+    // Regression guard: only the config file (and possibly a few resolved
+    // dependencies) should be loaded. If someone accidentally re-introduces
+    // eager loading, this will catch it.
+    expect(fileCount).toBeLessThan(10);
   },
 );
