@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "composite": true,
+    "declaration": true
+  },
+  "references": [
+    { "path": "./pkg-01" },
+    { "path": "./pkg-02" },
+    { "path": "./pkg-03" },
+    { "path": "./pkg-04" },
+    { "path": "./pkg-05" },
+    { "path": "./pkg-06" },
+    { "path": "./pkg-07" },
+    { "path": "./pkg-08" },
+    { "path": "./pkg-09" },
+    { "path": "./pkg-10" },
+    { "path": "./schema" }
+  ]
+}

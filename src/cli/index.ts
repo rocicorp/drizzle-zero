@@ -67,6 +67,7 @@ export interface GeneratorOptions {
   enableLegacyMutators?: boolean;
   enableLegacyQueries?: boolean;
   suppressDefaultsWarning?: boolean;
+  experimentalLazy?: boolean;
 }
 
 async function main(opts: GeneratorOptions = {}) {
@@ -85,6 +86,7 @@ async function main(opts: GeneratorOptions = {}) {
     enableLegacyMutators,
     enableLegacyQueries,
     suppressDefaultsWarning,
+    experimentalLazy,
   } = {...opts};
 
   const resolvedTsConfigPath = tsConfigPath ?? defaultTsConfigFile;
@@ -99,18 +101,21 @@ async function main(opts: GeneratorOptions = {}) {
       '😶‍🌫️  drizzle-zero: Using all tables/columns from Drizzle schema',
     );
   }
-  const allTsConfigPaths = await discoverAllTsConfigs(resolvedTsConfigPath);
 
   const tsProject = new Project({
     tsConfigFilePath: resolvedTsConfigPath,
     skipAddingFilesFromTsConfig: true,
   });
-  for (const tsConfigPath of allTsConfigPaths) {
-    addSourceFilesFromTsConfigSafe({
-      tsProject,
-      tsConfigPath,
-      debug: Boolean(debug),
-    });
+
+  if (!experimentalLazy) {
+    const allTsConfigPaths = await discoverAllTsConfigs(resolvedTsConfigPath);
+    for (const tsConfigPath of allTsConfigPaths) {
+      addSourceFilesFromTsConfigSafe({
+        tsProject,
+        tsConfigPath,
+        debug: Boolean(debug),
+      });
+    }
   }
 
   if (configFilePath) {
@@ -227,6 +232,11 @@ function cli() {
       false,
     )
     .option(
+      '--experimental-lazy',
+      'Use lazy file loading for faster startup (only loads files reachable from config)',
+      false,
+    )
+    .option(
       '--force',
       'Overwrite the output file even if it has been manually modified',
       false,
@@ -250,6 +260,7 @@ function cli() {
         enableLegacyMutators: command.enableLegacyMutators,
         enableLegacyQueries: command.enableLegacyQueries,
         suppressDefaultsWarning: command.suppressDefaultsWarning,
+        experimentalLazy: command.experimentalLazy,
       });
 
       if (command.output) {
