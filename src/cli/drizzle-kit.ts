@@ -3,8 +3,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as url from 'node:url';
 import type {Project} from 'ts-morph';
-import {tsImport} from 'tsx/esm/api';
 import {drizzleZeroConfig, type DrizzleToZeroSchema} from '../relations';
+import {tsImportShared} from './ts-import';
 import {ensureSourceFileInProject} from './ts-project';
 
 export const getDefaultConfig = async ({
@@ -30,7 +30,7 @@ export const getDefaultConfig = async ({
     resolvedDrizzleSchemaPath,
   ).href;
 
-  const drizzleSchema = await tsImport(
+  const drizzleSchema = await tsImportShared(
     resolvedDrizzleSchemaPathUrl,
     import.meta.url,
   );
@@ -92,7 +92,7 @@ export const getFullDrizzleSchemaFilePath = async ({
       await fs.access(fullPath);
 
       const drizzleKitConfigFilePathUrl = url.pathToFileURL(fullPath).href;
-      const drizzleKitConfigImport = await tsImport(
+      const drizzleKitConfigImport = await tsImportShared(
         drizzleKitConfigFilePathUrl,
         import.meta.url,
       );
