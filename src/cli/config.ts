@@ -87,13 +87,18 @@ export function getZeroSchemaDefsFromConfig({
     );
   }
 
-  const exportDeclarations = sourceFile.getExportedDeclarations();
-
-  for (const [name, declarations] of exportDeclarations.entries()) {
-    for (const declaration of declarations) {
-      if (exportName === name) {
-        return [name, declaration] as const;
-      }
+  // Targeted lookup avoids getExportedDeclarations() which forces full type resolution
+  if (exportName === 'default') {
+    const exportAssignment = sourceFile.getExportAssignment(
+      d => !d.isExportEquals(),
+    );
+    if (exportAssignment) {
+      return [exportName, exportAssignment] as const;
+    }
+  } else {
+    const variableDeclaration = sourceFile.getVariableDeclaration(exportName);
+    if (variableDeclaration) {
+      return [exportName, variableDeclaration] as const;
     }
   }
 
