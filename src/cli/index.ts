@@ -1,4 +1,5 @@
 import {Command} from 'commander';
+import {createHash} from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -6,7 +7,7 @@ import {Project} from 'ts-morph';
 import {getConfigFromFile, getDefaultConfigFilePath} from './config';
 import {getDefaultConfig} from './drizzle-kit';
 import {getGeneratedSchema} from './shared';
-import {checkSignature, signContent} from './signature';
+import {checkSignature, extractInputsHash, signContent} from './signature';
 import {discoverAllTsConfigs} from './tsconfig';
 import {
   addSourceFilesFromTsConfigSafe,
@@ -67,9 +68,54 @@ export interface GeneratorOptions {
   enableLegacyMutators?: boolean;
   enableLegacyQueries?: boolean;
   suppressDefaultsWarning?: boolean;
+  noCache?: boolean;
 }
 
-async function main(opts: GeneratorOptions = {}) {
+async function readFileOrEmpty(filePath: string): Promise<string> {
+  try {
+    return await fs.readFile(filePath, 'utf-8');
+  } catch {
+    return '';
+  }
+}
+
+async function getPackageVersion(): Promise<string | null> {
+  try {
+    const pkgPath = new URL('../../package.json', import.meta.url).pathname;
+    const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'));
+    return typeof pkg.version === 'string' ? pkg.version : null;
+  } catch {
+    return null;
+  }
+}
+
+async function computeInputsHash(opts: GeneratorOptions): Promise<string | null> {
+  const version = await getPackageVersion();
+  if (!version) {
+    return null;
+  }
+
+  const hash = createHash('sha256');
+  hash.update(`version:${version}\n`);
+  hash.update(`opts:${JSON.stringify(opts)}\n`);
+
+  const filesToHash = [
+    opts.config,
+    opts.drizzleSchemaPath,
+    opts.drizzleKitConfigPath,
+    opts.tsConfigPath ?? defaultTsConfigFile,
+  ].filter((f): f is string => typeof f === 'string');
+
+  for (const file of filesToHash) {
+    const resolved = path.resolve(process.cwd(), file);
+    const content = await readFileOrEmpty(resolved);
+    hash.update(`file:${resolved}:${content}\n`);
+  }
+
+  return hash.digest('hex');
+}
+
+async function main(opts: GeneratorOptions = {}): Promise<{output: string; fromCache: boolean}> {
   const {
     config,
     tsConfigPath,
@@ -85,6 +131,7 @@ async function main(opts: GeneratorOptions = {}) {
     enableLegacyMutators,
     enableLegacyQueries,
     suppressDefaultsWarning,
+    noCache,
   } = {...opts};
 
   const resolvedTsConfigPath = tsConfigPath ?? defaultTsConfigFile;
@@ -93,6 +140,26 @@ async function main(opts: GeneratorOptions = {}) {
   const defaultConfigFilePath = await getDefaultConfigFilePath();
 
   const configFilePath = config ?? defaultConfigFilePath;
+
+  // --- Cache check ---
+  const useCache = !noCache;
+  let cacheKey: string | null = null;
+
+  if (useCache) {
+    cacheKey = await computeInputsHash(opts);
+
+    if (cacheKey) {
+      const outputPath = path.resolve(process.cwd(), resolvedOutputFilePath);
+      const existingOutput = await readFileOrEmpty(outputPath);
+      if (existingOutput) {
+        const storedHash = extractInputsHash(existingOutput);
+        if (storedHash === cacheKey) {
+          return {output: existingOutput, fromCache: true};
+        }
+      }
+    }
+  }
+  // --- End cache check ---
 
   if (!configFilePath) {
     console.log(
@@ -167,7 +234,9 @@ async function main(opts: GeneratorOptions = {}) {
     );
   }
 
-  return signContent(zeroSchemaGenerated);
+  const output = signContent(zeroSchemaGenerated, cacheKey ?? undefined);
+
+  return {output, fromCache: false};
 }
 
 function cli() {
@@ -231,10 +300,14 @@ function cli() {
       'Overwrite the output file even if it has been manually modified',
       false,
     )
+    .option(
+      '--no-cache',
+      'Disable content-hash caching (always regenerate)',
+    )
     .action(async command => {
       console.log(`⚙️  drizzle-zero: Generating zero schema...`);
 
-      const zeroSchema = await main({
+      const {output: zeroSchema, fromCache} = await main({
         config: command.config,
         tsConfigPath: command.tsconfig,
         format: command.format,
@@ -250,7 +323,12 @@ function cli() {
         enableLegacyMutators: command.enableLegacyMutators,
         enableLegacyQueries: command.enableLegacyQueries,
         suppressDefaultsWarning: command.suppressDefaultsWarning,
+        noCache: !command.cache,
       });
+
+      if (fromCache) {
+        console.log(`⚡ drizzle-zero: Cache hit, inputs unchanged`);
+      }
 
       if (command.output) {
         const outputPath = path.resolve(process.cwd(), command.output);
