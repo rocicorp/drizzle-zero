@@ -99,18 +99,21 @@ async function main(opts: GeneratorOptions = {}) {
       '😶‍🌫️  drizzle-zero: Using all tables/columns from Drizzle schema',
     );
   }
-  const allTsConfigPaths = await discoverAllTsConfigs(resolvedTsConfigPath);
 
   const tsProject = new Project({
     tsConfigFilePath: resolvedTsConfigPath,
     skipAddingFilesFromTsConfig: true,
   });
-  for (const tsConfigPath of allTsConfigPaths) {
-    addSourceFilesFromTsConfigSafe({
-      tsProject,
-      tsConfigPath,
-      debug: Boolean(debug),
-    });
+
+  if (process.env.DRIZZLE_ZERO_EAGER_LOADING) {
+    const allTsConfigPaths = await discoverAllTsConfigs(resolvedTsConfigPath);
+    for (const tsConfigPath of allTsConfigPaths) {
+      addSourceFilesFromTsConfigSafe({
+        tsProject,
+        tsConfigPath,
+        debug: Boolean(debug),
+      });
+    }
   }
 
   if (configFilePath) {
