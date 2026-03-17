@@ -1,8 +1,8 @@
-import {defineQueries, defineQuery} from '@rocicorp/zero';
+import {defineQueriesWithType, defineQuery} from '@rocicorp/zero';
 import {z} from 'zod';
-import {zql} from './zero-schema.gen';
+import {type Schema, zql} from './zero-schema.gen';
 
-export const queries = defineQueries({
+export const queries = defineQueriesWithType<Schema>()({
   allUsers: defineQuery(() => zql.user.orderBy('id', 'asc')),
   filtersWithChildren: defineQuery(z.string(), ({args}) =>
     zql.filters

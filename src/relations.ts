@@ -169,9 +169,17 @@ type DrizzleToZeroSchema<
     DefaultTableColumnsConfig<TDrizzleSchema>,
 > = {
   readonly tables: {
-    readonly [K in keyof TDrizzleSchema as TDrizzleSchema[K] extends Table<any>
-      ? K
-      : never]: TDrizzleSchema[K] extends Table<any>
+    readonly [K in Extract<
+      {
+        [TTableName in keyof TDrizzleSchema &
+          keyof TColumnConfig]: TDrizzleSchema[TTableName] extends Table<any>
+          ? [TColumnConfig[TTableName]] extends [false | undefined]
+            ? never
+            : TTableName
+          : never;
+      }[keyof TDrizzleSchema & keyof TColumnConfig],
+      keyof TDrizzleSchema & string
+    >]: TDrizzleSchema[K] extends Table<any>
       ? ZeroTableBuilderSchema<
           K & string,
           TDrizzleSchema[K],
