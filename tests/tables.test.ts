@@ -698,6 +698,77 @@ describe('tables', () => {
     );
   });
 
+  test('pg - custom time SQL type fallback', () => {
+    const customTimeType = customType<{
+      data: number;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'time';
+      },
+    });
+
+    const customTimeTzType = customType<{
+      data: number;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'timetz';
+      },
+    });
+
+    const customTimeWithoutTzType = customType<{
+      data: number;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'time without time zone';
+      },
+    });
+
+    const testTable = pgTable('events', {
+      id: text().primaryKey(),
+      startsAt: customTimeType('starts_at').notNull(),
+      startsAtTz: customTimeTzType('starts_at_tz')
+        .notNull()
+        .default(sql`current_time`),
+      endsAt: customTimeWithoutTzType('ends_at'),
+    });
+
+    const result = createZeroTableBuilder('events', testTable, {
+      id: true,
+      startsAt: true,
+      startsAtTz: true,
+      endsAt: true,
+    });
+
+    const expected = table('events')
+      .columns({
+        id: string(),
+        startsAt: number().from('starts_at'),
+        startsAtTz: number().from('starts_at_tz').optional(),
+        endsAt: number().from('ends_at').optional(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    assertEqual(
+      result.schema.columns.startsAt.customType,
+      expected.schema.columns.startsAt.customType,
+    );
+    assertEqual(
+      result.schema.columns.startsAtTz.customType,
+      expected.schema.columns.startsAtTz.customType,
+    );
+    assertEqual(
+      result.schema.columns.endsAt.customType,
+      expected.schema.columns.endsAt.customType,
+    );
+  });
+
   test('pg - custom column mapping', () => {
     const testTable = pgTable('users', {
       id: text().primaryKey(),

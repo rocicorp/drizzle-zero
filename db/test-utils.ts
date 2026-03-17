@@ -1575,6 +1575,8 @@ export const seed = async () => {
     uuidField: '123e4567-e89b-12d3-a456-426614174000',
     varcharField: 'varchar',
     booleanField: true,
+    timeField: '12:34:56.789',
+    timeTzField: '12:34:56.789+02',
     timestampField: new Date(),
     timestampTzField: new Date(),
     timestampModeString: new Date().toISOString(),

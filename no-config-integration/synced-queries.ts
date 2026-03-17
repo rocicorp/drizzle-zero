@@ -31,6 +31,12 @@ export const queries = defineQueries({
   allTypesById: defineQuery(z.string(), ({args}) =>
     zql.allTypes.where(q => q.cmp('id', '=', args)).one(),
   ),
+  allTypesByTime: defineQuery(z.number(), ({args}) =>
+    zql.allTypes.where(q => q.cmp('timeField', '=', args)).one(),
+  ),
+  allTypesByTimeTz: defineQuery(z.number(), ({args}) =>
+    zql.allTypes.where(q => q.cmp('timeTzField', '=', args)).one(),
+  ),
   complexOrderWithEverything: defineQuery(z.string(), ({args}) =>
     zql.orderTable
       .where(q => q.cmp('id', '=', args))
