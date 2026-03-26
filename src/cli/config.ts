@@ -87,7 +87,7 @@ export function getZeroSchemaDefsFromConfig({
     );
   }
 
-  // Targeted lookup avoids getExportedDeclarations() which forces full type resolution
+  // try targeted lookup to avoid getExportedDeclarations() which forces full type resolution
   if (exportName === 'default') {
     const exportAssignment = sourceFile.getExportAssignment(
       d => !d.isExportEquals(),
@@ -97,9 +97,18 @@ export function getZeroSchemaDefsFromConfig({
     }
   } else {
     const variableDeclaration = sourceFile.getVariableDeclaration(exportName);
-    if (variableDeclaration) {
+    if (variableDeclaration?.isExported()) {
       return [exportName, variableDeclaration] as const;
     }
+  }
+
+  // fall back to all exported declarations in case of re-exports or other edge cases
+  const exportedDeclaration = sourceFile
+    .getExportedDeclarations()
+    .get(exportName)?.[0];
+
+  if (exportedDeclaration) {
+    return [exportName, exportedDeclaration] as const;
   }
 
   throw new Error(
