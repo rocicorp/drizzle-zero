@@ -6,7 +6,7 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 
 - [x] Phase 1: Upgrade dependencies and establish the breaking release target
 - [x] Phase 2: Replace column compatibility logic with beta-aware helpers
-- [ ] Phase 3: Rewrite type-level column mapping around beta `Column['_']` metadata
+- [x] Phase 3: Rewrite type-level column mapping around beta `Column['_']` metadata
 - [ ] Phase 4: Update runtime table generation to use the new beta helpers
 - [ ] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
 - [ ] Phase 6: Migrate unit fixtures and relation tests to beta syntax
@@ -79,9 +79,9 @@ Done:
 
 Checklist:
 
-- [ ] Add shared metadata helpers in `src/types.ts`
-- [ ] Remove dependence on legacy internal fields
-- [ ] Preserve current custom-type behavior under beta
+- [x] Add shared metadata helpers in `src/types.ts`
+- [x] Remove dependence on legacy internal fields
+- [x] Preserve current custom-type behavior under beta
 
 Details:
 
@@ -102,6 +102,12 @@ Details:
   - array custom types
   - timestamp/time columns mapping to Zero `number`
   - explicit timestamp overrides that should win over the default mapping
+
+Done:
+
+- Added shared beta metadata helpers in `src/types.ts` for `data`, `dataType`, `enumValues`, array detection, logical Zero type resolution, and custom-type extraction.
+- Updated `src/tables.ts` and the type-only `CustomType` path in `src/relations.ts` to use the shared metadata helpers instead of legacy `columnType` / `$type` checks.
+- Added focused type-level coverage in `tests/column-metadata-types.test.ts` and verified it with `pnpm vitest run --typecheck --typecheck.ignoreSourceErrors tests/column-metadata-types.test.ts`.
 
 ## Phase 4 - Runtime Table Generation
 
