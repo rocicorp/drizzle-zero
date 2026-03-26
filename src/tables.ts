@@ -137,19 +137,48 @@ type ZeroColumnDefinition<
   serverName?: string;
 }>;
 
+type PrimaryKeyColumnNames<TTable extends Table> = Extract<
+  FindPrimaryKeyFromTable<TTable>[number],
+  ColumnNames<TTable>
+>;
+
+type IncludedColumnKeys<
+  TTable extends Table,
+  TColumnConfig extends ColumnsConfig<TTable> | undefined,
+> = [TColumnConfig] extends [boolean | undefined]
+  ? ColumnNames<TTable>
+  : [PrimaryKeyColumnNames<TTable>] extends [never]
+    ? ColumnNames<TTable>
+    : Extract<
+        | PrimaryKeyColumnNames<TTable>
+        | {
+            [KColumn in keyof TColumnConfig & ColumnNames<TTable>]: [
+              TColumnConfig[KColumn],
+            ] extends [false | undefined]
+              ? never
+              : KColumn;
+          }[keyof TColumnConfig & ColumnNames<TTable>],
+        ColumnNames<TTable>
+      >;
+
 /**
  * Maps the columns configuration to their Zero schema definitions.
  */
 export type ZeroColumns<
   TTable extends Table,
   TColumnConfig extends ColumnsConfig<TTable> | undefined,
-> = {
-  [KColumn in ColumnNames<TTable>]: KColumn extends keyof TColumnConfig
-    ? TColumnConfig[KColumn & keyof TColumnConfig] extends ColumnBuilder<any>
-      ? TColumnConfig[KColumn & keyof TColumnConfig]['schema']
+> = Flatten<{
+  [KColumn in IncludedColumnKeys<
+    TTable,
+    TColumnConfig
+  >]: TColumnConfig extends object
+    ? KColumn extends keyof TColumnConfig
+      ? TColumnConfig[KColumn] extends ColumnBuilder<any>
+        ? TColumnConfig[KColumn]['schema']
+        : ZeroColumnDefinition<TTable, KColumn>
       : ZeroColumnDefinition<TTable, KColumn>
     : ZeroColumnDefinition<TTable, KColumn>;
-};
+}>;
 
 /**
  * Represents the underlying schema for a Zero table.
@@ -172,7 +201,7 @@ export type ZeroTableBuilderSchema<
 type ZeroTableBuilder<
   TTableName extends string,
   TTable extends Table,
-  TColumnConfig extends ColumnsConfig<TTable>,
+  TColumnConfig extends ColumnsConfig<TTable> | undefined,
 > = TableBuilderWithColumns<
   Readonly<ZeroTableBuilderSchema<TTableName, TTable, TColumnConfig>>
 >;
@@ -191,7 +220,7 @@ export type ZeroTableCasing = 'snake_case' | 'camelCase' | undefined;
 const createZeroTableBuilder = <
   TTableName extends string,
   TTable extends Table,
-  TColumnConfig extends ColumnsConfig<TTable>,
+  TColumnConfig extends ColumnsConfig<TTable> | undefined = undefined,
   TCasing extends ZeroTableCasing = ZeroTableCasing,
 >(
   /**
@@ -253,7 +282,9 @@ const createZeroTableBuilder = <
     (acc, [key, column]) => {
       const columnConfig =
         typeof columns === 'object' && columns !== null && columns !== undefined
-          ? columns?.[key as keyof TColumnConfig]
+          ? (columns as Extract<TColumnConfig, object>)[
+              key as keyof Extract<TColumnConfig, object>
+            ]
           : undefined;
 
       const isColumnConfigOverride = isColumnBuilder(columnConfig);

@@ -36,6 +36,7 @@ type DrizzleColumnType =
   | 'PgJson'
   | 'PgNumeric'
   | 'PgDateString'
+  | 'PgTime'
   | 'PgTimestampString'
   | 'PgArray';
 
@@ -53,6 +54,7 @@ export const drizzleColumnTypeToZeroType = {
   PgJson: 'json',
   PgNumeric: 'number',
   PgDateString: 'number',
+  PgTime: 'number',
   PgTimestampString: 'number',
   PgArray: 'json',
 } as const satisfies Record<DrizzleColumnType, string>;
@@ -99,6 +101,10 @@ export const postgresTypeToZeroType = {
 
   // date/time mapped to number (epoch millis)
   'date': 'number',
+  'time': 'number',
+  'time without time zone': 'number',
+  'time with time zone': 'number',
+  'timetz': 'number',
   'timestamp': 'number',
   'timestamp without time zone': 'number',
   'timestamp with time zone': 'number',
