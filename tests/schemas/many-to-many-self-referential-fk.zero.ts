@@ -12,20 +12,4 @@ export const schema = drizzleZeroConfig(manyToManySelfReferentialFk, {
       fk_to_doc: true,
     },
   },
-  manyToMany: {
-    doc: {
-      related_docs: [
-        {
-          sourceField: ['id'],
-          destTable: 'related',
-          destField: ['fk_from_doc'],
-        },
-        {
-          sourceField: ['fk_to_doc'],
-          destTable: 'doc',
-          destField: ['id'],
-        },
-      ],
-    },
-  },
 });
