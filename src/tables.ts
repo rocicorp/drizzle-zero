@@ -15,16 +15,15 @@ import {getTableColumns, getTableName} from 'drizzle-orm';
 import {toCamelCase, toSnakeCase} from 'drizzle-orm/casing';
 import {getTableConfigForDatabase} from './db';
 import {
-  type DrizzleColumnTypeToZeroType,
   drizzleColumnTypeToZeroType,
-  type DrizzleDataTypeToZeroType,
   drizzleDataTypeToZeroType,
   postgresTypeToZeroType,
-  type ZeroTypeToTypescriptType,
 } from './drizzle-to-zero';
 import type {
   ColumnNames,
   Columns,
+  ResolveColumnCustomType,
+  ResolveColumnDefaultType,
   FindPrimaryKeyFromTable,
   Flatten,
 } from './types';
@@ -33,15 +32,6 @@ import {debugLog, typedEntries} from './util';
 const warnedServerDefaults = new Set<string>();
 
 export type {ColumnBuilder, ReadonlyJSONValue, TableBuilderWithColumns};
-
-/**
- * Represents a column definition from a Drizzle table, filtered by column name.
- * @template TTable The Drizzle table type
- * @template K The column name to filter by
- */
-type ColumnDefinition<TTable extends Table, K extends ColumnNames<TTable>> = {
-  [C in keyof Columns<TTable>]: C extends K ? Columns<TTable>[C] : never;
-}[keyof Columns<TTable>];
 
 /**
  * The type override for a column.
@@ -69,60 +59,9 @@ export type ColumnsConfig<TTable extends Table> =
       readonly [KColumn in ColumnNames<TTable>]:
         | boolean
         | ColumnBuilder<
-            TypeOverride<
-              ZeroTypeToTypescriptType[DrizzleDataTypeToZeroType[Columns<TTable>[KColumn]['dataType']]]
-            >
+            TypeOverride<ResolveColumnDefaultType<Columns<TTable>[KColumn]>>
           >;
     }>;
-
-/**
- * Maps a Drizzle column type to its corresponding Zero type.
- */
-type ZeroMappedColumnType<
-  TTable extends Table,
-  KColumn extends ColumnNames<TTable>,
-  CD extends ColumnDefinition<TTable, KColumn>['_'] = ColumnDefinition<
-    TTable,
-    KColumn
-  >['_'],
-> = CD extends {
-  columnType: keyof DrizzleColumnTypeToZeroType;
-}
-  ? DrizzleColumnTypeToZeroType[CD['columnType']]
-  : DrizzleDataTypeToZeroType[CD['dataType']];
-
-/**
- * Maps a Drizzle column to its corresponding TypeScript type in Zero.
- * Handles special cases like enums and custom types.
- */
-type ZeroMappedCustomType<
-  TTable extends Table,
-  KColumn extends ColumnNames<TTable>,
-  CD extends ColumnDefinition<TTable, KColumn>['_'] = ColumnDefinition<
-    TTable,
-    KColumn
-  >['_'],
-> = CD extends {
-  columnType: 'PgCustomColumn';
-}
-  ? CD['data']
-  : CD extends {
-        columnType: 'PgEnumColumn';
-      }
-    ? CD['data']
-    : CD extends {
-          columnType: 'PgText';
-          data: string;
-        }
-      ? CD['data']
-      : CD extends {
-            columnType: 'PgArray';
-            data: infer TArrayData;
-          }
-        ? TArrayData
-        : CD extends {$type: any}
-          ? CD['$type']
-          : ZeroTypeToTypescriptType[ZeroMappedColumnType<TTable, KColumn>];
 
 /**
  * Defines the structure of a column in the Zero schema.
@@ -133,7 +72,7 @@ type ZeroColumnDefinition<
 > = Flatten<{
   optional: boolean;
   type: ValueType;
-  customType: ZeroMappedCustomType<TTable, KColumn>;
+  customType: ResolveColumnCustomType<Columns<TTable>[KColumn]>;
   serverName?: string;
 }>;
 

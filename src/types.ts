@@ -1,5 +1,69 @@
-import type {Table} from 'drizzle-orm';
+import type {Column, Table} from 'drizzle-orm';
+import type {ZeroColumnType, ZeroTypeToTypescriptType} from './drizzle-to-zero';
 import type {ColumnsConfig} from './tables';
+
+type ArrayLikeDrizzleConstraint =
+  | 'basecolumn'
+  | 'halfvector'
+  | 'int64vector'
+  | 'vector';
+
+type DateLikeDrizzleStringConstraint =
+  | 'date'
+  | 'datetime'
+  | 'time'
+  | 'timestamp';
+
+type NumberLikeDrizzleStringConstraint =
+  | 'int64'
+  | 'numeric'
+  | 'uint64'
+  | 'unumeric';
+
+type StringLikeDrizzleConstraint = 'enum' | 'uuid';
+
+type IsUnknown<T> = unknown extends T
+  ? [keyof T] extends [never]
+    ? true
+    : false
+  : false;
+
+type IsUnsupportedTupleArrayDataType<TDataType extends string> =
+  TDataType extends `array ${infer TConstraint}`
+    ? TConstraint extends ArrayLikeDrizzleConstraint
+      ? false
+      : true
+    : false;
+
+type PreserveNarrowType<TData, TWide, TFallback> = TData extends TWide
+  ? TWide extends TData
+    ? TFallback
+    : TData
+  : TData;
+
+type ResolveNumberLikeCustomType<TData> = TData extends number
+  ? PreserveNarrowType<TData, number, number>
+  : TData extends string
+    ? PreserveNarrowType<TData, string, number>
+    : TData extends bigint
+      ? PreserveNarrowType<TData, bigint, number>
+      : TData extends Date
+        ? PreserveNarrowType<TData, Date, number>
+        : TData;
+
+type ResolveStringLikeCustomType<TData> = TData extends string ? TData : string;
+
+type ResolveBooleanLikeCustomType<TData> = TData extends boolean
+  ? PreserveNarrowType<TData, boolean, boolean>
+  : boolean;
+
+type ResolveJsonCustomType<TData> =
+  IsUnknown<TData> extends true ? ZeroTypeToTypescriptType['json'] : TData;
+
+type ResolveArrayCustomType<TData> =
+  TData extends ReadonlyArray<unknown>
+    ? TData
+    : ZeroTypeToTypescriptType['json'];
 
 /**
  * Gets the keys of columns that can be used as indexes.
@@ -53,7 +117,136 @@ type DefaultColumnsConfig<TTable extends Table> = {
  * Gets all columns from a Drizzle table type.
  * @template TTable The Drizzle table type
  */
-export type Columns<TTable extends Table> = TTable['_']['columns'];
+type TableColumnKeys<TTable extends Table> = Extract<
+  {
+    [K in keyof TTable]: TTable[K] extends Column ? K : never;
+  }[keyof TTable],
+  string
+>;
+
+export type Columns<TTable extends Table> = Pick<
+  TTable,
+  TableColumnKeys<TTable>
+>;
+
+export type ColumnMetadata<TColumn> = TColumn extends {_: unknown}
+  ? TColumn['_']
+  : never;
+
+export type ColumnData<TColumn> =
+  ColumnMetadata<TColumn> extends {
+    data: infer TData;
+  }
+    ? TData
+    : never;
+
+export type ColumnDataType<TColumn> =
+  ColumnMetadata<TColumn> extends {
+    dataType: infer TDataType extends string;
+  }
+    ? TDataType
+    : never;
+
+export type ColumnEnumValues<TColumn> =
+  ColumnMetadata<TColumn> extends {
+    enumValues: infer TEnumValues;
+  }
+    ? TEnumValues
+    : never;
+
+export type ColumnHasEnumValues<TColumn> =
+  ColumnEnumValues<TColumn> extends readonly string[] ? true : false;
+
+export type NormalizeColumnDataType<TDataType extends string> =
+  TDataType extends 'date'
+    ? 'date'
+    : TDataType extends 'array'
+      ? 'array'
+      : TDataType extends `array ${infer TConstraint}`
+        ? TConstraint extends ArrayLikeDrizzleConstraint
+          ? 'array'
+          : never
+        : TDataType extends 'bigint' | `bigint ${string}`
+          ? 'bigint'
+          : TDataType extends 'boolean'
+            ? 'boolean'
+            : TDataType extends 'custom'
+              ? 'custom'
+              : TDataType extends 'number' | `number ${string}`
+                ? 'number'
+                : TDataType extends `object ${infer TConstraint}`
+                  ? TConstraint extends 'json'
+                    ? 'json'
+                    : TConstraint extends 'date'
+                      ? 'date'
+                      : never
+                  : TDataType extends 'string'
+                    ? 'string'
+                    : TDataType extends `string ${infer TConstraint}`
+                      ? TConstraint extends DateLikeDrizzleStringConstraint
+                        ? 'date'
+                        : TConstraint extends NumberLikeDrizzleStringConstraint
+                          ? 'number'
+                          : TConstraint extends StringLikeDrizzleConstraint
+                            ? 'string'
+                            : never
+                      : never;
+
+export type NormalizedColumnDataType<TColumn> =
+  ColumnDataType<TColumn> extends infer TDataType extends string
+    ? NormalizeColumnDataType<TDataType>
+    : never;
+
+export type ColumnIsArray<TColumn> =
+  NormalizedColumnDataType<TColumn> extends 'array'
+    ? true
+    : ColumnData<TColumn> extends ReadonlyArray<unknown>
+      ? ColumnDataType<TColumn> extends infer TDataType extends string
+        ? IsUnsupportedTupleArrayDataType<TDataType> extends true
+          ? false
+          : true
+        : true
+      : false;
+
+export type ResolveColumnZeroType<TColumn> =
+  ColumnIsArray<TColumn> extends true
+    ? 'json'
+    : ColumnHasEnumValues<TColumn> extends true
+      ? 'string'
+      : NormalizedColumnDataType<TColumn> extends 'bigint' | 'date' | 'number'
+        ? 'number'
+        : NormalizedColumnDataType<TColumn> extends 'boolean'
+          ? 'boolean'
+          : NormalizedColumnDataType<TColumn> extends 'json'
+            ? 'json'
+            : NormalizedColumnDataType<TColumn> extends 'string'
+              ? 'string'
+              : never;
+
+export type ResolveColumnDefaultType<TColumn> =
+  ResolveColumnZeroType<TColumn> extends infer TZeroType extends ZeroColumnType
+    ? ZeroTypeToTypescriptType[TZeroType]
+    : unknown;
+
+export type ResolveColumnCustomType<TColumn> =
+  ColumnIsArray<TColumn> extends true
+    ? ResolveArrayCustomType<ColumnData<TColumn>>
+    : ColumnHasEnumValues<TColumn> extends true
+      ? ResolveStringLikeCustomType<ColumnData<TColumn>>
+      : NormalizedColumnDataType<TColumn> extends 'custom'
+        ? ColumnData<TColumn>
+        : NormalizedColumnDataType<TColumn> extends 'json'
+          ? ResolveJsonCustomType<ColumnData<TColumn>>
+          : NormalizedColumnDataType<TColumn> extends 'string'
+            ? ResolveStringLikeCustomType<ColumnData<TColumn>>
+            : NormalizedColumnDataType<TColumn> extends 'boolean'
+              ? ResolveBooleanLikeCustomType<ColumnData<TColumn>>
+              : NormalizedColumnDataType<TColumn> extends
+                    | 'bigint'
+                    | 'date'
+                    | 'number'
+                ? ResolveNumberLikeCustomType<ColumnData<TColumn>>
+                : unknown;
 
 /**
  * Gets all column names from a Drizzle table type.
@@ -66,7 +259,9 @@ export type ColumnNames<TTable extends Table> = keyof Columns<TTable>;
  * @template T The Drizzle table type
  */
 type PrimaryKeyColumns<T extends Table> = {
-  [K in keyof Columns<T>]: Columns<T>[K]['_']['isPrimaryKey'] extends true
+  [K in keyof Columns<T>]: ColumnMetadata<Columns<T>[K]> extends {
+    isPrimaryKey: true;
+  }
     ? K extends string
       ? K
       : never
