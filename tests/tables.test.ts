@@ -37,6 +37,7 @@ import {
   smallint,
   smallserial,
   text,
+  time,
   timestamp,
   uuid,
   varchar,
@@ -654,6 +655,120 @@ describe('tables', () => {
     );
   });
 
+  test('pg - time fields', () => {
+    const testTable = pgTable('events', {
+      id: text().primaryKey(),
+      startsAt: time().notNull(),
+      startsAtTz: time({withTimezone: true}),
+      preciseTime: time({precision: 2}),
+    });
+
+    const result = createZeroTableBuilder('events', testTable, {
+      id: true,
+      startsAt: true,
+      startsAtTz: true,
+      preciseTime: true,
+    });
+
+    const expected = table('events')
+      .columns({
+        id: string(),
+        startsAt: number(),
+        startsAtTz: number().optional(),
+        preciseTime: number().optional(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    assertEqual(
+      result.schema.columns.id.customType,
+      expected.schema.columns.id.customType,
+    );
+    assertEqual(
+      result.schema.columns.startsAt.customType,
+      expected.schema.columns.startsAt.customType,
+    );
+    assertEqual(
+      result.schema.columns.startsAtTz.customType,
+      expected.schema.columns.startsAtTz.customType,
+    );
+    assertEqual(
+      result.schema.columns.preciseTime.customType,
+      expected.schema.columns.preciseTime.customType,
+    );
+  });
+
+  test('pg - custom time SQL type fallback', () => {
+    const customTimeType = customType<{
+      data: number;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'time';
+      },
+    });
+
+    const customTimeTzType = customType<{
+      data: number;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'timetz';
+      },
+    });
+
+    const customTimeWithoutTzType = customType<{
+      data: number;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'time without time zone';
+      },
+    });
+
+    const testTable = pgTable('events', {
+      id: text().primaryKey(),
+      startsAt: customTimeType('starts_at').notNull(),
+      startsAtTz: customTimeTzType('starts_at_tz')
+        .notNull()
+        .default(sql`current_time`),
+      endsAt: customTimeWithoutTzType('ends_at'),
+    });
+
+    const result = createZeroTableBuilder('events', testTable, {
+      id: true,
+      startsAt: true,
+      startsAtTz: true,
+      endsAt: true,
+    });
+
+    const expected = table('events')
+      .columns({
+        id: string(),
+        startsAt: number().from('starts_at'),
+        startsAtTz: number().from('starts_at_tz').optional(),
+        endsAt: number().from('ends_at').optional(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    assertEqual(
+      result.schema.columns.startsAt.customType,
+      expected.schema.columns.startsAt.customType,
+    );
+    assertEqual(
+      result.schema.columns.startsAtTz.customType,
+      expected.schema.columns.startsAtTz.customType,
+    );
+    assertEqual(
+      result.schema.columns.endsAt.customType,
+      expected.schema.columns.endsAt.customType,
+    );
+  });
+
   test('pg - custom column mapping', () => {
     const testTable = pgTable('users', {
       id: text().primaryKey(),
@@ -816,6 +931,8 @@ describe('tables', () => {
       identifier: uuid().notNull(),
       description: varchar().notNull(),
       isActive: pgBoolean().notNull(),
+      startsAt: time().notNull(),
+      startsAtTz: time({withTimezone: true}).notNull(),
       createdAt: timestamp().notNull(),
       updatedAt: timestamp({withTimezone: true}).notNull(),
       birthDate: date().notNull(),
@@ -834,6 +951,7 @@ describe('tables', () => {
       optionalDoublePrecision: doublePrecision('optional_double_precision'),
       optionalText: text('optional_text'),
       optionalBoolean: pgBoolean('optional_boolean'),
+      optionalTime: time('optional_time'),
       optionalTimestamp: timestamp('optional_timestamp'),
       optionalDate: date('optional_date'),
       optionalJson: jsonb('optional_json'),
@@ -858,6 +976,8 @@ describe('tables', () => {
       identifier: true,
       description: true,
       isActive: true,
+      startsAt: true,
+      startsAtTz: true,
       createdAt: true,
       updatedAt: true,
       birthDate: true,
@@ -874,6 +994,7 @@ describe('tables', () => {
       optionalDoublePrecision: true,
       optionalText: true,
       optionalBoolean: true,
+      optionalTime: true,
       optionalTimestamp: true,
       optionalDate: true,
       optionalJson: true,
@@ -899,6 +1020,8 @@ describe('tables', () => {
         identifier: string(),
         description: string(),
         isActive: boolean(),
+        startsAt: number(),
+        startsAtTz: number(),
         createdAt: number(),
         updatedAt: number(),
         birthDate: number(),
@@ -917,6 +1040,7 @@ describe('tables', () => {
           .from('optional_double_precision'),
         optionalText: string().optional().from('optional_text'),
         optionalBoolean: boolean().optional().from('optional_boolean'),
+        optionalTime: number().optional().from('optional_time'),
         optionalTimestamp: number().optional().from('optional_timestamp'),
         optionalDate: number().optional().from('optional_date'),
         optionalJson: json().optional().from('optional_json'),
@@ -996,6 +1120,14 @@ describe('tables', () => {
       expected.schema.columns.isActive.customType,
     );
     assertEqual(
+      result.schema.columns.startsAt.customType,
+      expected.schema.columns.startsAt.customType,
+    );
+    assertEqual(
+      result.schema.columns.startsAtTz.customType,
+      expected.schema.columns.startsAtTz.customType,
+    );
+    assertEqual(
       result.schema.columns.createdAt.customType,
       expected.schema.columns.createdAt.customType,
     );
@@ -1058,6 +1190,10 @@ describe('tables', () => {
     assertEqual(
       result.schema.columns.optionalBoolean.customType,
       expected.schema.columns.optionalBoolean.customType,
+    );
+    assertEqual(
+      result.schema.columns.optionalTime.customType,
+      expected.schema.columns.optionalTime.customType,
     );
     assertEqual(
       result.schema.columns.optionalTimestamp.customType,

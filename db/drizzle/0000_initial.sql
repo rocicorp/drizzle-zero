@@ -19,6 +19,8 @@ CREATE TABLE "all_types" (
 	"uuid" uuid NOT NULL,
 	"varchar" varchar NOT NULL,
 	"boolean" boolean NOT NULL,
+	"time" time NOT NULL,
+	"time_tz" time with time zone NOT NULL,
 	"timestamp" timestamp NOT NULL,
 	"timestamp_tz" timestamp with time zone NOT NULL,
 	"timestamp_mode_string" timestamp NOT NULL,
