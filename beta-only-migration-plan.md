@@ -7,7 +7,7 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 - [x] Phase 1: Upgrade dependencies and establish the breaking release target
 - [x] Phase 2: Replace column compatibility logic with beta-aware helpers
 - [x] Phase 3: Rewrite type-level column mapping around beta `Column['_']` metadata
-- [ ] Phase 4: Update runtime table generation to use the new beta helpers
+- [x] Phase 4: Update runtime table generation to use the new beta helpers
 - [ ] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
 - [ ] Phase 6: Migrate unit fixtures and relation tests to beta syntax
 - [ ] Phase 7: Migrate integration schemas and generated outputs to beta syntax
@@ -113,9 +113,9 @@ Done:
 
 Checklist:
 
-- [ ] Update `src/tables.ts` to use the new helpers
-- [ ] Keep existing table-shaping behavior stable
-- [ ] Add or update beta-focused table/type tests
+- [x] Update `src/tables.ts` to use the new helpers
+- [x] Keep existing table-shaping behavior stable
+- [x] Add or update beta-focused table/type tests
 
 Details:
 
@@ -133,6 +133,16 @@ Details:
   - enums
   - timestamp/time/date behavior
   - explicit overrides
+
+Done:
+
+- Switched the runtime column mapping in `src/tables.ts` to `resolveDrizzleColumnToZeroType(...)`, while keeping PK handling, optionality rules, default warnings, and `.from(...)` casing behavior unchanged.
+- Fixed runtime enum-array handling so beta array columns still build Zero `json(...)` columns instead of accidental scalar enumerations.
+- Updated `tests/tables.test.ts` for beta warning strings and added a custom timestamp/date SQL fallback case; verified runtime coverage with `pnpm vitest run --typecheck.enabled false tests/tables.test.ts tests/drizzle-to-zero.test.ts tests/column-metadata-types.test.ts`.
+
+Note:
+
+- `pnpm vitest run --typecheck --typecheck.ignoreSourceErrors tests/tables.test.ts` still reports two pre-existing beta array custom-type inference mismatches (`jsonbArray` and nested array custom types). Those are type-level follow-up work, not runtime table-builder regressions.
 
 ## Phase 5 - Relation Engine Rewrite
 

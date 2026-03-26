@@ -223,8 +223,12 @@ export type ResolveColumnZeroType<TColumn> =
               ? 'string'
               : never;
 
-export type ResolveColumnDefaultType<TColumn> =
-  ResolveColumnZeroType<TColumn> extends infer TZeroType extends ZeroColumnType
+export type ResolveColumnDefaultType<TColumn> = [
+  ResolveColumnZeroType<TColumn>,
+] extends [never]
+  ? unknown
+  : ResolveColumnZeroType<TColumn> extends infer TZeroType extends
+        ZeroColumnType
     ? ZeroTypeToTypescriptType[TZeroType]
     : unknown;
 

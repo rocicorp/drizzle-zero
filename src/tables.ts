@@ -15,9 +15,8 @@ import {getTableColumns, getTableName} from 'drizzle-orm';
 import {toCamelCase, toSnakeCase} from 'drizzle-orm/casing';
 import {getTableConfigForDatabase} from './db';
 import {
-  drizzleColumnTypeToZeroType,
-  drizzleDataTypeToZeroType,
-  postgresTypeToZeroType,
+  isDrizzleArrayColumn,
+  resolveDrizzleColumnToZeroType,
 } from './drizzle-to-zero';
 import type {
   ColumnNames,
@@ -30,6 +29,7 @@ import type {
 import {debugLog, typedEntries} from './util';
 
 const warnedServerDefaults = new Set<string>();
+const supportedZeroTypes = ['string', 'number', 'boolean', 'json'] as const;
 
 export type {ColumnBuilder, ReadonlyJSONValue, TableBuilderWithColumns};
 
@@ -260,21 +260,15 @@ const createZeroTableBuilder = <
         }
       }
 
-      const type =
-        drizzleColumnTypeToZeroType[
-          column.columnType as keyof typeof drizzleColumnTypeToZeroType
-        ] ??
-        drizzleDataTypeToZeroType[
-          column.dataType as keyof typeof drizzleDataTypeToZeroType
-        ] ??
-        postgresTypeToZeroType[
-          column.getSQLType() as keyof typeof postgresTypeToZeroType
-        ] ??
-        null;
+      const type = resolveDrizzleColumnToZeroType(column);
+      const isEnumColumn =
+        !isDrizzleArrayColumn(column) &&
+        Array.isArray(column.enumValues) &&
+        column.enumValues.length > 0;
 
       if (type === null && !isColumnConfigOverride) {
         console.warn(
-          `🚨  drizzle-zero: Unsupported column type: ${resolvedColumnName} - ${column.columnType} (${column.dataType}). It will not be included in the output. Must be supported by Zero, e.g.: ${Object.keys({...drizzleDataTypeToZeroType, ...drizzleColumnTypeToZeroType}).join(' | ')}`,
+          `🚨  drizzle-zero: Unsupported column type: ${resolvedColumnName} - ${column.columnType} (${column.dataType}). It will not be included in the output. Must resolve to a Zero type, e.g.: ${supportedZeroTypes.join(' | ')}`,
         );
 
         return acc;
@@ -313,7 +307,7 @@ const createZeroTableBuilder = <
         };
       }
 
-      const schemaValue = column.enumValues
+      const schemaValue = isEnumColumn
         ? zeroEnumeration<typeof column.enumValues>()
         : type === 'string'
           ? zeroString()
