@@ -2,6 +2,7 @@ import {
   pgTable,
   text,
   jsonb,
+  time,
   timestamp,
   pgEnum,
   integer,
@@ -117,6 +118,30 @@ describe('CustomType', () => {
     expectTypeOf<ExtractedCreatedAt>().toEqualTypeOf<number>();
     expectTypeOf<ExtractedUpdatedAt>().toEqualTypeOf<number>();
     expectTypeOf<ExtractedPlainTimestamp>().toEqualTypeOf<number>();
+  });
+
+  test('extracts time types as number (Zero representation)', () => {
+    const scheduleTable = pgTable('schedule', {
+      id: text('id').primaryKey(),
+      startsAt: time('starts_at').notNull(),
+      startsAtTz: time('starts_at_tz', {withTimezone: true}).notNull(),
+    });
+
+    const schema = {scheduleTable};
+
+    type ExtractedStartsAt = CustomType<
+      typeof schema,
+      'scheduleTable',
+      'startsAt'
+    >;
+    type ExtractedStartsAtTz = CustomType<
+      typeof schema,
+      'scheduleTable',
+      'startsAtTz'
+    >;
+
+    expectTypeOf<ExtractedStartsAt>().toEqualTypeOf<number>();
+    expectTypeOf<ExtractedStartsAtTz>().toEqualTypeOf<number>();
   });
 
   test('handles timestamp with custom type override', () => {

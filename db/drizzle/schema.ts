@@ -23,6 +23,7 @@ import {
   smallint,
   smallserial,
   text,
+  time,
   timestamp,
   uuid,
   varchar,
@@ -167,6 +168,8 @@ export const allTypes = pgTable('all_types', {
   uuidField: uuid('uuid').notNull(),
   varcharField: varchar('varchar').notNull(),
   booleanField: boolean('boolean').notNull(),
+  timeField: time('time').notNull(),
+  timeTzField: time('time_tz', {withTimezone: true}).notNull(),
   timestampField: timestamp('timestamp').notNull(),
   timestampTzField: timestamp('timestamp_tz', {withTimezone: true}).notNull(),
   timestampModeString: timestamp('timestamp_mode_string', {

@@ -26,6 +26,8 @@ import {schema, type Filter, type Schema} from '../zero-schema.gen';
 import {queries} from '../synced-queries';
 
 const zeroDb = zeroDrizzle(schema, db);
+const seededTimeFieldMs = 45_296_789;
+const seededTimeTzFieldMs = 38_096_789;
 
 // Provide WebSocket on the global scope
 globalThis.WebSocket = WebSocket as unknown as typeof globalThis.WebSocket;
@@ -199,6 +201,8 @@ describe('types', () => {
     expect(typeof result?.uuidField).toStrictEqual('string');
     expect(result?.varcharField).toStrictEqual('varchar');
     expect(result?.booleanField).toStrictEqual(true);
+    expect(result?.timeField).toStrictEqual(seededTimeFieldMs);
+    expect(result?.timeTzField).toStrictEqual(seededTimeTzFieldMs);
     expect(typeof result?.timestampField).toStrictEqual('number');
     expect(typeof result?.timestampTzField).toStrictEqual('number');
     expect(typeof result?.timestampModeDate).toStrictEqual('number');
@@ -244,10 +248,36 @@ describe('types', () => {
     await zero.close();
   });
 
+  test('can filter all types by time fields', async () => {
+    const zero = await getNewZero();
+
+    const resultByTime = await zero.run(
+      queries.allTypesByTime(seededTimeFieldMs),
+      {
+        type: 'complete',
+      },
+    );
+    const resultByTimeTz = await zero.run(
+      queries.allTypesByTimeTz(seededTimeTzFieldMs),
+      {
+        type: 'complete',
+      },
+    );
+
+    expect(resultByTime?.id).toStrictEqual('1');
+    expect(resultByTime?.timeField).toStrictEqual(seededTimeFieldMs);
+    expect(resultByTimeTz?.id).toStrictEqual('1');
+    expect(resultByTimeTz?.timeTzField).toStrictEqual(seededTimeTzFieldMs);
+
+    await zero.close();
+  });
+
   test('can insert all types', async () => {
     const zero = await getNewZero();
 
     const currentDate = new Date();
+    const insertedTimeFieldMs = 32_887_654;
+    const insertedTimeTzFieldMs = 32_887_654;
 
     const uuid1 = '123e4567-e89b-12d3-a456-426614174001';
     const uuid2 = '123e4567-e89b-12d3-a456-426614174002';
@@ -268,6 +298,8 @@ describe('types', () => {
         uuidField: '123e4567-e89b-12d3-a456-426614174001',
         varcharField: 'varchar2',
         booleanField: true,
+        timeField: insertedTimeFieldMs,
+        timeTzField: insertedTimeTzFieldMs,
         timestampField: currentDate.getTime(),
         timestampTzField: currentDate.getTime(),
         timestampModeDate: currentDate.getTime(),
@@ -308,6 +340,8 @@ describe('types', () => {
     expect(typeof result?.uuidField).toStrictEqual('string');
     expect(result?.varcharField).toStrictEqual('varchar2');
     expect(result?.booleanField).toStrictEqual(true);
+    expect(result?.timeField).toStrictEqual(insertedTimeFieldMs);
+    expect(result?.timeTzField).toStrictEqual(insertedTimeTzFieldMs);
     expect(result?.timestampField).toStrictEqual(currentDate.getTime());
     expect(result?.timestampTzField).toStrictEqual(currentDate.getTime());
     expect(result?.timestampModeDate).toStrictEqual(currentDate.getTime());
@@ -350,6 +384,8 @@ describe('types', () => {
     expect(dbResult?.uuidField).toBeDefined();
     expect(dbResult?.varcharField).toStrictEqual('varchar2');
     expect(dbResult?.booleanField).toStrictEqual(true);
+    expect(dbResult?.timeField).toStrictEqual('09:08:07.654');
+    expect(dbResult?.timeTzField).toStrictEqual('09:08:07.654+00');
     expect(dbResult?.timestampField?.toISOString()).toStrictEqual(
       currentDate.toISOString(),
     );

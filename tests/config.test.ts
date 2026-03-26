@@ -2,6 +2,7 @@ import {describe, expect, test} from 'vitest';
 import {drizzleZeroConfig} from '../src/relations';
 import {pgTable, serial, text, primaryKey} from 'drizzle-orm/pg-core';
 import type {Schema} from '@rocicorp/zero';
+import {assertEqual} from './utils';
 
 describe('drizzleZeroConfig with explicit table and column configuration', () => {
   const users = pgTable('users', {
@@ -74,6 +75,11 @@ describe('drizzleZeroConfig with explicit table and column configuration', () =>
         // comments table is not mentioned, should be excluded
       },
     });
+
+    assertEqual(
+      null as unknown as keyof typeof schema.tables,
+      null as unknown as 'users' | 'usersToPosts',
+    );
 
     // `users` and `usersToPosts` should be in the schema
     expect(Object.keys(schema.tables).length).toBe(2);

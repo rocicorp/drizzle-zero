@@ -1,8 +1,8 @@
-import {defineQueries, defineQuery} from '@rocicorp/zero';
+import {defineQueriesWithType, defineQuery} from '@rocicorp/zero';
 import {z} from 'zod';
-import {zql} from './zero-schema.gen';
+import {type Schema, zql} from './zero-schema.gen';
 
-export const queries = defineQueries({
+export const queries = defineQueriesWithType<Schema>()({
   allUsers: defineQuery(() => zql.user.orderBy('id', 'asc')),
   filtersWithChildren: defineQuery(z.string(), ({args}) =>
     zql.filters
@@ -30,6 +30,12 @@ export const queries = defineQueries({
   ),
   allTypesById: defineQuery(z.string(), ({args}) =>
     zql.allTypes.where(q => q.cmp('id', '=', args)).one(),
+  ),
+  allTypesByTime: defineQuery(z.number(), ({args}) =>
+    zql.allTypes.where(q => q.cmp('timeField', '=', args)).one(),
+  ),
+  allTypesByTimeTz: defineQuery(z.number(), ({args}) =>
+    zql.allTypes.where(q => q.cmp('timeTzField', '=', args)).one(),
   ),
   complexOrderWithEverything: defineQuery(z.string(), ({args}) =>
     zql.orderTable

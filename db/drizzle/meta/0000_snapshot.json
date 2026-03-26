@@ -1,5 +1,5 @@
 {
-  "id": "fcb52e9b-1910-4aff-a30f-5aa9c4e4c007",
+  "id": "62d41de5-32ef-4d4c-8c61-d2a5ae3603e1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -121,6 +121,18 @@
         "boolean": {
           "name": "boolean",
           "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "name": "time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_tz": {
+          "name": "time_tz",
+          "type": "time with time zone",
           "primaryKey": false,
           "notNull": true
         },
