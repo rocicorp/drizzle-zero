@@ -5,7 +5,7 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 ## Progress Checklist
 
 - [x] Phase 1: Upgrade dependencies and establish the breaking release target
-- [ ] Phase 2: Replace column compatibility logic with beta-aware helpers
+- [x] Phase 2: Replace column compatibility logic with beta-aware helpers
 - [ ] Phase 3: Rewrite type-level column mapping around beta `Column['_']` metadata
 - [ ] Phase 4: Update runtime table generation to use the new beta helpers
 - [ ] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
@@ -49,9 +49,9 @@ Done:
 
 Checklist:
 
-- [ ] Rewrite `src/drizzle-to-zero.ts`
-- [ ] Add beta-aware runtime helper functions
-- [ ] Encode the new Zero type resolution order
+- [x] Rewrite `src/drizzle-to-zero.ts`
+- [x] Add beta-aware runtime helper functions
+- [x] Encode the new Zero type resolution order
 
 Details:
 
@@ -68,6 +68,12 @@ Details:
   4. normalized `dataType`
   5. `getSQLType()` fallback
 - Ensure beta arrays always resolve to Zero `json` even if the base element type is numeric, enum, UUID, or JSON.
+
+Done:
+
+- Rewrote `src/drizzle-to-zero.ts` around beta-aware runtime parsing, conservative data-type normalization, array detection, and one exported Zero type resolver.
+- Added focused helper coverage in `tests/drizzle-to-zero.test.ts` for normalization, `dimensions`, `baseColumn`, enum-array precedence, SQL fallback, and unsupported tuple-style array-like types.
+- Verified the new helper tests with `pnpm vitest run --typecheck.enabled false tests/drizzle-to-zero.test.ts`.
 
 ## Phase 3 - Type-Level Column Mapping
 
