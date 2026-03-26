@@ -8,7 +8,7 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 - [x] Phase 2: Replace column compatibility logic with beta-aware helpers
 - [x] Phase 3: Rewrite type-level column mapping around beta `Column['_']` metadata
 - [x] Phase 4: Update runtime table generation to use the new beta helpers
-- [ ] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
+- [x] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
 - [ ] Phase 6: Migrate unit fixtures and relation tests to beta syntax
 - [ ] Phase 7: Migrate integration schemas and generated outputs to beta syntax
 - [ ] Phase 8: Update docs and migration messaging
@@ -20,7 +20,6 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 - Legacy `relations(...)` schemas are no longer supported.
 - Beta `defineRelations(...)` and `defineRelationsPart(...)` are the only supported relation inputs.
 - Beta `through(...)` is the canonical many-to-many source.
-- `manyToMany` config remains temporarily, but only as a deprecated fallback path.
 - Beta arrays always map to Zero `json`.
 - Existing logical type behavior for JSON, branded/custom strings, enums, timestamps, time fields, and explicit overrides remains intact.
 
@@ -148,9 +147,9 @@ Note:
 
 Checklist:
 
-- [ ] Rewrite `src/relations.ts` to be beta-only for relation discovery
-- [ ] Normalize beta relations into a shared hop-based IR
-- [ ] Keep `manyToMany` only as a deprecated fallback path
+- [x] Rewrite `src/relations.ts` to be beta-only for relation discovery
+- [x] Normalize beta relations into a shared hop-based IR
+- [x] Remove `manyToMany` completely
 
 Details:
 
@@ -167,12 +166,28 @@ Details:
   - direct `one` / `many` relations become one hop
   - `through(...)` relations become two hops
 - Build Zero relationships from that normalized representation rather than branching heavily by source style.
-- Route deprecated explicit `manyToMany` config into the same normalized representation so it does not introduce a separate behavior model.
+- Remove `manyToMany` completely - don't support it at all so it does not introduce a separate model.
 - Keep conflict detection strict and deterministic for:
   - duplicate relationship names
   - relation names that collide with selected columns
   - ambiguous or conflicting relation definitions
 - Preserve stable table key resolution, especially for schema-qualified tables and same-name tables across schemas.
+
+Done:
+
+- Rewrote `src/relations.ts` around beta `defineRelations(...)` / `defineRelationsPart(...)` exports, removing legacy wrapper scanning, reverse field inference, and all `manyToMany` support.
+- Added a shared hop-based normalization path for direct relations and beta `through(...)` relations, then built Zero relationships from that normalized representation.
+- Added focused coverage in `tests/beta-relations.test.ts` for direct relations, `through(...)`, merged `defineRelationsPart(...)` exports, legacy `relations(...)` rejection, and removed `manyToMany` config rejection.
+
+Verified:
+
+- `pnpm vitest run --typecheck.enabled false tests/beta-relations.test.ts`
+- `pnpm vitest run --typecheck --typecheck.ignoreSourceErrors tests/beta-relations.test.ts`
+- `pnpm vitest run --typecheck.enabled false tests/config.test.ts tests/beta-relations.test.ts`
+
+Note:
+
+- Legacy relation fixtures under `tests/schemas/` and integration schemas still need to move to beta syntax in later phases, so the old broad relation suite is intentionally not the verification target for this phase.
 
 ## Phase 6 - Unit Tests And Fixtures
 
@@ -211,8 +226,7 @@ Checklist:
 Details:
 
 - Rewrite `db/drizzle/schema.ts` so its relation exports use beta syntax instead of `relations(...)`.
-- Update `integration/drizzle-zero.config.ts` so new many-to-many behavior comes from beta `through(...)` instead of expanding `manyToMany` usage.
-- Keep at least one deprecated `manyToMany` path covered if we still want temporary compatibility.
+- Remove `manyToMany` from `integration/drizzle-zero.config.ts` so integration coverage uses beta `through(...)` exclusively.
 - Regenerate `integration/zero-schema.gen.ts` and `no-config-integration/zero-schema.gen.ts` after the migration.
 - Run the existing integration query suites and confirm the generated relationship names and shapes still match expected usage.
 
@@ -221,14 +235,14 @@ Details:
 Checklist:
 
 - [ ] Rewrite `README.md` examples to beta syntax only
-- [ ] Document dropped legacy support and deprecated `manyToMany`
+- [ ] Document dropped legacy support and removed `manyToMany`
 - [ ] Add a migration section for users
 
 Details:
 
 - Update all README examples to beta Drizzle relation syntax.
 - State clearly that legacy `relations(...)` exports are no longer supported.
-- State clearly that `manyToMany` is deprecated and beta `through(...)` is preferred.
+- State clearly that `manyToMany` has been removed and beta `through(...)` is required.
 - Add migration guidance mapping old concepts to new ones:
   - legacy `relations(...)` -> beta `defineRelations(...)` / `defineRelationsPart(...)`
   - explicit many-to-many config -> beta `through(...)`
@@ -265,7 +279,7 @@ Details:
 - Self-relations and aliased dual relations are easy to break if normalization is too aggressive.
 - Subset table configs must continue to skip relationships safely when one side is excluded.
 - Composite key relations must preserve field ordering exactly.
-- Deprecated `manyToMany` must not diverge from the beta normalization path.
+- Removing `manyToMany` will shift migration pressure onto `through(...)`, so integration/docs coverage needs to make that path obvious.
 
 ## Suggested Execution Order
 
