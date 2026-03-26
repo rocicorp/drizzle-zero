@@ -4,7 +4,11 @@ const main = async () => {
   await tsup.build({
     outDir: './dist',
     splitting: false,
-    dts: true,
+    dts: {
+      compilerOptions: {
+        ignoreDeprecations: '6.0',
+      },
+    },
     entry: ['src/index.ts'],
     format: ['cjs', 'esm'],
     external: [
