@@ -9,7 +9,7 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 - [x] Phase 3: Rewrite type-level column mapping around beta `Column['_']` metadata
 - [x] Phase 4: Update runtime table generation to use the new beta helpers
 - [x] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
-- [ ] Phase 6: Migrate unit fixtures and relation tests to beta syntax
+- [x] Phase 6: Migrate unit fixtures and relation tests to beta syntax
 - [ ] Phase 7: Migrate integration schemas and generated outputs to beta syntax
 - [ ] Phase 8: Update docs and migration messaging
 - [ ] Phase 9: Run verification, fix regressions, and prepare release
@@ -193,9 +193,9 @@ Note:
 
 Checklist:
 
-- [ ] Rewrite relation fixtures under `tests/schemas/`
-- [ ] Remove legacy-only compatibility tests
-- [ ] Add beta-focused coverage for direct and `through(...)` relations
+- [x] Rewrite relation fixtures under `tests/schemas/`
+- [x] Remove legacy-only compatibility tests
+- [x] Add beta-focused coverage for direct and `through(...)` relations
 
 Details:
 
@@ -214,6 +214,22 @@ Details:
   - self-referential `through(...)`
   - relation name conflicts
   - arrays and custom types under beta column metadata
+
+Done:
+
+- Rewrote the relation schema fixtures in `tests/schemas/*.schema.ts` to beta `defineRelations(...)` syntax and removed the old `relations(...)`-based fixtures that only existed for legacy reverse-scanning checks.
+- Removed all remaining test fixture use of `manyToMany` config, deleted the config-only many-to-many fixture variants, and kept the surviving many-to-many expectations on beta `through(...)` exports instead.
+- Trimmed `tests/relations.test.ts` down to runtime-focused beta fixture coverage, while `tests/beta-relations.test.ts` keeps the focused direct/`through(...)` engine checks added in Phase 5.
+
+Verified:
+
+- `pnpm vitest run --typecheck.enabled false tests/relations.test.ts tests/beta-relations.test.ts`
+- `pnpm vitest run --typecheck --typecheck.ignoreSourceErrors tests/relations.test.ts tests/beta-relations.test.ts`
+- `pnpm exec prettier --check "tests/relations.test.ts" "tests/schemas" "beta-only-migration-plan.md"`
+
+Note:
+
+- The fixture suite is now beta-only, but the larger integration schemas under `db/` still need the same migration in Phase 7.
 
 ## Phase 7 - Integration Migration
 

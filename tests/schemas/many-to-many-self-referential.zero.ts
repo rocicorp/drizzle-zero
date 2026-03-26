@@ -13,20 +13,4 @@ export const schema = drizzleZeroConfig(manyToManySelfReferential, {
       accepted: true,
     },
   },
-  manyToMany: {
-    user: {
-      friends: [
-        {
-          sourceField: ['id'],
-          destTable: 'friendship',
-          destField: ['requestingId'],
-        },
-        {
-          sourceField: ['acceptingId'],
-          destTable: 'user',
-          destField: ['id'],
-        },
-      ],
-    },
-  },
 });
