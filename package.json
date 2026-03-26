@@ -96,6 +96,7 @@
     "@vitest/ui": "^4.1.0",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.1",
+    "effect": "^3.21.0",
     "oxlint": "^1.56.0",
     "oxlint-tsgolint": "^0.17.1",
     "prettier": "^3.8.1",
