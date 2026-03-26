@@ -3,8 +3,7 @@ import type {
   Project,
   TypeAliasDeclaration,
 } from 'ts-morph';
-import {StructureKind} from 'ts-morph';
-import {TypeFormatFlags} from 'typescript';
+import {StructureKind, ts} from 'ts-morph';
 
 export interface CustomTypeRequest {
   tableName: string;
@@ -28,9 +27,9 @@ const RESOLVER_FILE_NAME = '__drizzle_zero_type_resolver.ts';
 type ResolverImport = Omit<ImportDeclarationStructure, 'kind'>;
 
 const typeFormatFlags =
-  TypeFormatFlags.UseAliasDefinedOutsideCurrentScope |
-  TypeFormatFlags.NoTruncation |
-  TypeFormatFlags.WriteArrowStyleSignature;
+  ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope |
+  ts.TypeFormatFlags.NoTruncation |
+  ts.TypeFormatFlags.WriteArrowStyleSignature;
 
 export function resolveCustomTypes({
   project,

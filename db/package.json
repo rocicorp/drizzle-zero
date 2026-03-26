@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@testcontainers/postgresql": "^11.13.0",
-    "@types/pg": "^8.18.0",
-    "@vitest/browser": "^4.1.0",
+    "@types/pg": "^8.20.0",
+    "@vitest/browser": "^4.1.1",
     "drizzle-kit": "^0.31.10",
     "pg": "^8.20.0",
     "postgres": "^3.4.8",
