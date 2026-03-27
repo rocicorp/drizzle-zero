@@ -1,16 +1,5 @@
 import type {ReadonlyJSONValue} from '@rocicorp/zero';
 
-type DrizzleDataType = 'number' | 'bigint' | 'boolean' | 'date';
-
-export const drizzleDataTypeToZeroType = {
-  number: 'number',
-  bigint: 'number',
-  boolean: 'boolean',
-  date: 'number',
-} as const satisfies Record<DrizzleDataType, string>;
-
-export type DrizzleDataTypeToZeroType = typeof drizzleDataTypeToZeroType;
-
 type DrizzleColumnType =
   | 'PgText'
   | 'PgChar'

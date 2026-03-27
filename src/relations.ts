@@ -1,11 +1,12 @@
 import {createSchema} from '@rocicorp/zero';
-import type {RelationsBuilderColumnBase} from 'drizzle-orm/relations';
-import {getColumnTable} from 'drizzle-orm/column';
 import {Table, getTableName, getTableUniqueName, is} from 'drizzle-orm';
+import {Relations as LegacyRelations} from 'drizzle-orm/_relations';
+import {getColumnTable} from 'drizzle-orm/column';
+import type {RelationsBuilderColumnBase} from 'drizzle-orm/relations';
 import {
-  type ColumnsConfig,
   createZeroTableBuilder,
   getDrizzleColumnKeyFromColumnName,
+  type ColumnsConfig,
   type ZeroTableBuilderSchema,
   type ZeroTableCasing,
 } from './tables';
@@ -128,12 +129,6 @@ type BetaRelationsTableConfig = {
   readonly relations: Record<string, unknown>;
 };
 
-type LegacyRelationsExport = {
-  readonly $brand: 'Relations';
-  readonly table: unknown;
-  readonly config: unknown;
-};
-
 type RuntimeBetaRelation = {
   readonly fieldName: string;
   readonly relationType: 'one' | 'many';
@@ -195,22 +190,6 @@ const isBetaRelationsExport = (
 
   const entries = Object.values(value);
   return entries.length > 0 && entries.every(isBetaRelationsTableConfig);
-};
-
-const isLegacyRelationsExport = (
-  value: unknown,
-): value is LegacyRelationsExport => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return false;
-  }
-
-  return (
-    '$brand' in value &&
-    value.$brand === 'Relations' &&
-    'table' in value &&
-    'config' in value &&
-    typeof value.config === 'function'
-  );
 };
 
 const getBetaRelationEntries = (
@@ -511,7 +490,7 @@ const drizzleZeroConfig = <
       continue;
     }
 
-    if (isLegacyRelationsExport(schemaValue)) {
+    if (schemaValue instanceof LegacyRelations) {
       legacyRelationExports.push(String(entryName));
       continue;
     }
@@ -567,7 +546,7 @@ const drizzleZeroConfig = <
 
   if (legacyRelationExports.length > 0) {
     throw new Error(
-      `drizzle-zero: Legacy relations(...) exports are no longer supported. Use defineRelations(...) or defineRelationsPart(...) instead. Found: ${legacyRelationExports.join(', ')}`,
+      `drizzle-zero: Legacy relations(...) exports are no longer supported. Use beta defineRelations(...) or defineRelationsPart(...) instead. Found: ${legacyRelationExports.join(', ')}`,
     );
   }
 
