@@ -12,7 +12,6 @@ import {
   type StartedTestContainer,
 } from 'testcontainers';
 import {getShortCode} from './drizzle/types';
-import * as drizzleSchema from './schema';
 import {
   allTypes,
   analyticsDashboard,
@@ -91,7 +90,20 @@ import {
   timeEntry,
   timesheet,
   user,
-} from './schema';
+} from './drizzle/tables';
+import {
+  coreRelations,
+  crmRelations,
+  peopleRelations,
+  financeRelations,
+  projectRelations,
+  supportRelations,
+  commerceRelations,
+  documentRelations,
+  analyticsRelations,
+  marketingRelations,
+  integrationRelations,
+} from './drizzle/relations';
 
 const versionInt = parseInt(process.env.PG_VERSION ?? '16');
 const PG_PORT = 5732 + (versionInt - 16);
@@ -113,8 +125,21 @@ let startedNetwork: StartedNetwork | null = null;
 let postgresContainer: StartedPostgreSqlContainer | null = null;
 let zeroContainer: StartedTestContainer | null = null;
 
-export const db = drizzle(pool, {
-  schema: drizzleSchema,
+export const db = drizzle({
+  client: pool,
+  relations: {
+    ...coreRelations,
+    ...crmRelations,
+    ...peopleRelations,
+    ...financeRelations,
+    ...projectRelations,
+    ...supportRelations,
+    ...commerceRelations,
+    ...documentRelations,
+    ...analyticsRelations,
+    ...marketingRelations,
+    ...integrationRelations,
+  },
 });
 
 export const seed = async () => {

@@ -1772,9 +1772,9 @@ describe('tables', () => {
       boolArray: pgBoolean().array(),
       numericArray: numeric().array(),
       uuidArray: uuid().array(),
-      jsonbArray: jsonb().array().$type<{id: string; name: string}[]>(),
+      jsonbArray: jsonb().$type<{id: string; name: string}>().array(),
       enumArray: enumType().array(),
-      matrix: integer().array().array(),
+      matrix: integer('matrix').array('[][]'),
     });
 
     const result = createZeroTableBuilder('test', testTable);
@@ -1832,8 +1832,8 @@ describe('tables', () => {
   test('pg - array types with custom types', () => {
     const testTable = pgTable('test', {
       id: text().primaryKey(),
-      emails: text().array().$type<`${string}@${string}`[]>().notNull(),
-      customNumbers: integer().array().$type<1 | 2 | 3[]>(),
+      emails: text().$type<`${string}@${string}`>().array().notNull(),
+      customNumbers: integer().$type<1 | 2 | 3>().array(),
     });
 
     const result = createZeroTableBuilder('test', testTable, {
@@ -1846,7 +1846,7 @@ describe('tables', () => {
       .columns({
         id: string(),
         emails: json<`${string}@${string}`[]>(),
-        customNumbers: json<1 | 2 | 3[]>().optional(),
+        customNumbers: json<(1 | 2 | 3)[]>().optional(),
       })
       .primaryKey('id');
 

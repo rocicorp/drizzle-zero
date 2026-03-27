@@ -55,12 +55,12 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 name: {
                   type: 'string',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
               },
             },
@@ -292,7 +292,7 @@ describe('getGeneratedSchema', () => {
           name: 'users',
           primaryKey: ['id'],
           columns: {
-            id: {type: 'integer', optional: false, customType: undefined},
+            id: {type: 'integer', optional: false, customType: null},
             name: {type: 'string', optional: false, customType: null},
           },
         },
@@ -506,7 +506,7 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 customField: {
                   type: 'string',
@@ -558,7 +558,7 @@ describe('getGeneratedSchema', () => {
           name: 'users',
           primaryKey: ['id'],
           columns: {
-            id: {type: 'integer', optional: false, customType: undefined},
+            id: {type: 'integer', optional: false, customType: null},
             name: {type: 'string', optional: false, customType: null},
           },
         },
@@ -611,7 +611,7 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 customField: {
                   type: 'string',
@@ -666,7 +666,7 @@ describe('getGeneratedSchema', () => {
           name: 'users',
           primaryKey: ['id'],
           columns: {
-            id: {type: 'integer', optional: false, customType: undefined},
+            id: {type: 'integer', optional: false, customType: null},
             name: {type: 'string', optional: false, customType: null},
           },
         },
@@ -732,7 +732,7 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 customField: {
                   type: 'string',
@@ -792,7 +792,7 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 customField: {
                   type: 'string',
@@ -852,7 +852,7 @@ describe('getGeneratedSchema', () => {
                   id: {
                     type: 'number',
                     optional: false,
-                    customType: undefined,
+                    customType: null,
                   },
                 },
               },
@@ -907,7 +907,7 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 customField: {
                   type: 'string',
@@ -970,7 +970,7 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 customField: {
                   type: 'string',
@@ -1022,12 +1022,12 @@ describe('getGeneratedSchema', () => {
                 id: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 name: {
                   type: 'string',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
               },
             },
@@ -1071,11 +1071,11 @@ describe('getGeneratedSchema', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
                 name: {
                   type: 'string',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
               },
             },
@@ -1083,16 +1083,16 @@ describe('getGeneratedSchema', () => {
               name: 'posts',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
                 title: {
                   type: 'string',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
                 userId: {
                   type: 'number',
                   optional: false,
-                  customType: undefined,
+                  customType: null,
                 },
               },
             },
@@ -1131,21 +1131,21 @@ describe('getGeneratedSchema', () => {
               name: 'userProfiles',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
             blog_posts: {
               name: 'blog_posts',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
             user: {
               name: 'user',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
           },
@@ -1186,14 +1186,14 @@ describe('getGeneratedSchema', () => {
           name: 'users',
           primaryKey: ['id'],
           columns: {
-            id: {type: 'integer', optional: false, customType: undefined},
+            id: {type: 'integer', optional: false, customType: null},
           },
         },
         posts: {
           name: 'posts',
           primaryKey: ['id'],
           columns: {
-            id: {type: 'integer', optional: false, customType: undefined},
+            id: {type: 'integer', optional: false, customType: null},
           },
         },
       },
@@ -1290,7 +1290,7 @@ describe('getGeneratedSchema', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
           },
@@ -1335,7 +1335,7 @@ describe('getGeneratedSchema', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
           },
@@ -1380,7 +1380,7 @@ describe('getGeneratedSchema', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
           },
@@ -1416,7 +1416,7 @@ describe('getGeneratedSchema', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
           },
@@ -1452,7 +1452,7 @@ describe('getGeneratedSchema', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
               },
             },
           },
@@ -1747,8 +1747,8 @@ describe('signature integration', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
-                name: {type: 'string', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
+                name: {type: 'string', optional: false, customType: null},
               },
             },
           },
@@ -1781,8 +1781,8 @@ describe('signature integration', () => {
               name: 'users',
               primaryKey: ['id'],
               columns: {
-                id: {type: 'number', optional: false, customType: undefined},
-                name: {type: 'string', optional: false, customType: undefined},
+                id: {type: 'number', optional: false, customType: null},
+                name: {type: 'string', optional: false, customType: null},
               },
             },
           },

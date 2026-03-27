@@ -204,7 +204,7 @@ describe('CustomType', () => {
 
   test('works with complex schema from no-config-integration', async () => {
     // Import the actual drizzle schema
-    const drizzleSchema = await import('../db/schema');
+    const drizzleSchema = await import('../db/drizzle/schema');
 
     // Test custom type extraction from the user table
     type UserEmail = CustomType<typeof drizzleSchema, 'user', 'email'>;

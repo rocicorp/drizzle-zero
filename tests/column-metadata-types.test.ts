@@ -121,7 +121,7 @@ describe('column metadata types', () => {
   test('keeps override defaults broad for zero builders', () => {
     const testTable = pgTable('events', {
       id: text('id').primaryKey(),
-      emails: text('emails').array().$type<`${string}@${string}`[]>(),
+      emails: text('emails').$type<`${string}@${string}`>().array(),
     });
 
     expectTypeOf<
