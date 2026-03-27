@@ -28,7 +28,7 @@ describe('drizzle-to-zero runtime helpers', () => {
     const testTable = pgTable('posts', {
       id: text('id').primaryKey(),
       tags: text('tags').array(),
-      matrix: integer('matrix').array().array(),
+      matrix: integer('matrix').array('[][]'),
     });
 
     expect(isDrizzleArrayColumn(testTable.id)).toBe(false);

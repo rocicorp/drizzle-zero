@@ -299,8 +299,8 @@ Verified:
 
 Checklist:
 
-- [ ] Run the repo test and typecheck flows
-- [ ] Search for remaining legacy relation API usage
+- [x] Run the repo test and typecheck flows
+- [x] Search for remaining legacy relation API usage
 - [ ] Confirm acceptance criteria before release
 
 Details:
@@ -319,6 +319,55 @@ Details:
   - beta arrays map to Zero `json`
   - logical type behavior is preserved under beta
   - README and integration examples are beta-only
+
+Status:
+
+- Verification is partially complete, but release readiness is still blocked.
+
+Verified:
+
+- `pnpm check-types` (fails)
+- `pnpm test` (fails)
+- `pnpm --filter @drizzle-zero/integration generate` (passes)
+- `pnpm --filter @drizzle-zero/integration build` (fails)
+- `pnpm --filter @drizzle-zero/integration test` (fails because `pretest` runs the failing build)
+- `pnpm --filter @drizzle-zero/no-config-integration generate` (passes)
+- `pnpm --filter @drizzle-zero/no-config-integration build` (fails)
+- `pnpm --filter @drizzle-zero/no-config-integration test` (fails because `pretest` runs the failing build)
+
+Current blockers:
+
+- `db/test-utils.ts` has a beta Drizzle client typing error around `drizzle(pool, {schema})`.
+- `integration/tests/integration.test.ts` and `no-config-integration/tests/integration.test.ts` still infer the generated schema as `{}` in one query assertion path.
+- `tests/cli.test.ts` still expects `customType: undefined` in generated objects, but the beta migration keeps those fields typed as JSON-safe values instead.
+- `tests/tables.test.ts` still has unresolved beta array custom-type inference mismatches for `jsonbArray`, nested arrays, and `.array().$type(...)` cases.
+- `src/relations.ts` still imports `drizzle-orm/_relations` to detect and reject legacy exports, so the "no source file imports old-only relation APIs" acceptance criterion is not yet satisfied.
+
+Legacy API search notes:
+
+- No remaining legacy `relations(...)` or `manyToMany` usage was found in `db/`, `integration/`, or `no-config-integration/` source files.
+- Remaining repo-wide mentions are limited to migration docs, rejection/error messaging, test names, and the legacy-rejection coverage in `tests/beta-relations.test.ts`.
+
+## Phase 10 - Blocker Cleanup And Release Gate Fixes
+
+Checklist:
+
+- [ ] Fix beta array custom-type handling and related test expectations
+- [ ] Remove the legacy `_relations` source dependency while keeping legacy-export rejection
+- [ ] Fix integration and helper typing regressions
+- [ ] Re-run release-gate verification
+
+Current pass:
+
+- Re-run the release gate against the current staged blocker fixes before changing scope again.
+- Treat Phase 10 as the active release-readiness phase until `pnpm check-types`, `pnpm test`, and both integration build/test flows are either green or reduced to explicit external blockers.
+
+Details:
+
+- Resolve the remaining beta array custom-type mismatches, including `jsonbArray`, nested arrays, and beta-friendly `.array()` / `.$type(...)` ordering in tests and fixtures.
+- Remove the `drizzle-orm/_relations` source import from `src/relations.ts` and replace it with structural detection so no production source file depends on legacy relation internals.
+- Fix the beta Drizzle client typing in `db/test-utils.ts`, the generated-schema typing issue in the integration tests, and the CLI test expectations around generated `customType` fields.
+- Re-run `pnpm check-types`, `pnpm test`, and the integration/no-config generate-build-test flows until the release criteria are either green or reduced to clearly documented external blockers.
 
 ## Main Risks To Watch
 
