@@ -30,10 +30,16 @@ export const getDefaultConfig = async ({
     resolvedDrizzleSchemaPath,
   ).href;
 
-  const drizzleSchema = await tsImport(
+  const drizzleSchemaImport = await tsImport(
     resolvedDrizzleSchemaPathUrl,
     import.meta.url,
   );
+
+  const drizzleSchema =
+    typeof drizzleSchemaImport.default === 'object' &&
+    drizzleSchemaImport.default !== null
+      ? drizzleSchemaImport.default
+      : drizzleSchemaImport;
 
   const zeroSchema = drizzleZeroConfig(drizzleSchema, {
     casing: drizzleCasing ?? undefined,
