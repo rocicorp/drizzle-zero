@@ -270,9 +270,9 @@ Note:
 
 Checklist:
 
-- [ ] Rewrite `README.md` examples to beta syntax only
-- [ ] Document dropped legacy support and removed `manyToMany`
-- [ ] Add a migration section for users
+- [x] Rewrite `README.md` examples to beta syntax only
+- [x] Document dropped legacy support and removed `manyToMany`
+- [x] Add a migration section for users
 
 Details:
 
@@ -283,6 +283,17 @@ Details:
   - legacy `relations(...)` -> beta `defineRelations(...)` / `defineRelationsPart(...)`
   - explicit many-to-many config -> beta `through(...)`
 - Include the user-facing upgrade order: upgrade to Drizzle beta first, then upgrade `drizzle-zero`.
+
+Done:
+
+- Rewrote `README.md` around beta-only relation examples using `defineRelations(...)` and `through(...)`, removing all legacy `relations(...)` and `manyToMany` config documentation.
+- Added explicit install and support guidance for the beta-only Drizzle peer range, plus a large-schema note for `defineRelationsPart(...)`.
+- Added a migration section covering upgrade order, concept mapping, and dropped support for legacy relation exports and `manyToMany`.
+
+Verified:
+
+- `pnpm exec prettier --check "README.md"`
+- Grepped `README.md` to confirm legacy examples were removed and beta relation APIs are documented instead.
 
 ## Phase 9 - Verification And Release Readiness
 
