@@ -211,6 +211,7 @@ export function getGeneratedSchema({
   const usedIdentifiers = new Set<string>([schemaObjectName]);
   const tableConstNames = new Map<string, string>();
   const relationshipConstNames = new Map<string, string>();
+  const fallbackCustomTypeAliasNames = new Map<string, string>();
   let readonlyJSONValueImported = false;
 
   const sanitizeIdentifier = (value: string, fallback: string) => {
@@ -241,6 +242,24 @@ export function getGeneratedSchema({
     getUniqueIdentifier(
       ensureSuffix(sanitizeIdentifier(name, fallback), suffix),
     );
+
+  const createCustomTypeAliasName = (tableName: string, columnName: string) =>
+    getUniqueIdentifier(
+      camelCase(`${tableName} ${columnName} custom type`, {pascalCase: true}),
+    );
+
+  for (const request of customTypeRequests) {
+    const key = `${request.tableName}${COLUMN_SEPARATOR}${request.columnName}`;
+
+    if (resolvedCustomTypes.has(key)) {
+      continue;
+    }
+
+    fallbackCustomTypeAliasNames.set(
+      key,
+      createCustomTypeAliasName(request.tableName, request.columnName),
+    );
+  }
 
   const writeSchemaReferenceCollection = (
     writer: CodeBlockWriter,
@@ -349,6 +368,12 @@ export function getGeneratedSchema({
                     `${tableName}${COLUMN_SEPARATOR}${columnName}`,
                   )
                 : undefined;
+            const fallbackAlias =
+              typeof tableName === 'string' && typeof columnName === 'string'
+                ? fallbackCustomTypeAliasNames.get(
+                    `${tableName}${COLUMN_SEPARATOR}${columnName}`,
+                  )
+                : undefined;
 
             if (resolvedType) {
               writer.write(`null as unknown as ${resolvedType}`);
@@ -356,6 +381,8 @@ export function getGeneratedSchema({
               if (resolvedType === 'ReadonlyJSONValue') {
                 readonlyJSONValueImported = true;
               }
+            } else if (fallbackAlias) {
+              writer.write(`null as unknown as ${fallbackAlias}`);
             } else {
               writer.write(
                 `null as unknown as ${customTypeHelper}<${zeroSchemaSpecifier}, "${keys[tableIndex]}", "${keys[columnIndex]}">`,
@@ -392,6 +419,28 @@ export function getGeneratedSchema({
   };
 
   let tableConstCount = 0;
+
+  if (
+    zeroSchemaSpecifier !== undefined &&
+    fallbackCustomTypeAliasNames.size > 0
+  ) {
+    for (const [key, aliasName] of fallbackCustomTypeAliasNames) {
+      const [tableName, columnName] = key.split(COLUMN_SEPARATOR);
+
+      if (!tableName || !columnName) {
+        continue;
+      }
+
+      zeroSchemaGenerated.addTypeAlias({
+        name: aliasName,
+        isExported: true,
+        type: `${customTypeHelper}<${zeroSchemaSpecifier}, ${JSON.stringify(tableName)}, ${JSON.stringify(columnName)}>`,
+      });
+    }
+
+    zeroSchemaGenerated.addStatements(writer => writer.blankLine());
+  }
+
   if (isRecord(result.zeroSchema?.tables)) {
     for (const [tableName, tableDef] of Object.entries(
       result.zeroSchema.tables as Record<string, unknown>,

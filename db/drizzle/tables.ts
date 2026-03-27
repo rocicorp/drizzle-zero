@@ -35,6 +35,8 @@ import type {
   FeatureFlagSnapshot,
   NotificationPreferences,
   ReleaseTrack,
+  TestExportedType,
+  TestInterface,
   RuntimeFlagDefinition,
   SchemaDriftFinding,
   ShortCodeValue,
@@ -45,14 +47,6 @@ import type {
 import type {Country, USState} from './country';
 import type {Currency, CurrencyCode} from './currency';
 import type {ContentType} from './mime';
-
-export interface TestInterface {
-  nameInterface: 'custom-inline-interface';
-}
-
-export type TestExportedType = {
-  nameType: 'custom-inline-type';
-};
 
 type TestType = {
   nameType: 'custom-inline-type';

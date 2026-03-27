@@ -128,7 +128,10 @@ describe('getGeneratedSchema', () => {
 
     // Check for special handling of null customType
     expect(generatedSchema).toContain(
-      'null as unknown as ZeroCustomType<typeof zeroSchema, "users", "customTypeJson">',
+      'export type UsersCustomTypeJsonCustomType = ZeroCustomType<typeof zeroSchema, "users", "customTypeJson">;',
+    );
+    expect(generatedSchema).toContain(
+      'null as unknown as UsersCustomTypeJsonCustomType',
     );
 
     expect(generatedSchema).toContain('"customTypeJson": {');
@@ -142,6 +145,8 @@ describe('getGeneratedSchema', () => {
       import type { ZeroCustomType } from "drizzle-zero";
       import type { schema as zeroSchema } from "./tests/schemas/one-to-one.zero";
 
+      export type UsersCustomTypeJsonCustomType = ZeroCustomType<typeof zeroSchema, "users", "customTypeJson">;
+
       const usersTable = {
           "name": "users",
           "primaryKey": ["id"],
@@ -149,7 +154,7 @@ describe('getGeneratedSchema', () => {
               "customTypeJson": {
                   "type": "string",
                   "optional": false,
-                  "customType": null as unknown as ZeroCustomType<typeof zeroSchema, "users", "customTypeJson">
+                  "customType": null as unknown as UsersCustomTypeJsonCustomType
               }
           }
       } as const;
@@ -364,7 +369,10 @@ describe('getGeneratedSchema', () => {
     });
 
     expect(customTypeGenerated).toContain(
-      'null as unknown as CustomType<typeof drizzleSchema, "users", "customField">',
+      'export type UsersCustomFieldCustomType = CustomType<typeof drizzleSchema, "users", "customField">;',
+    );
+    expect(customTypeGenerated).toContain(
+      'null as unknown as UsersCustomFieldCustomType',
     );
 
     // Reset the mock after the test
