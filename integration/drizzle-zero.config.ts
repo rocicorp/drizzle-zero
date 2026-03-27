@@ -71,7 +71,6 @@ export const schema = drizzleZeroConfig(drizzleSchema, {
     projectTag: true,
     projectTask: true,
     projectTaskTag: true,
-    projectTaskTagLink: true,
     shipment: true,
     shipmentItem: true,
     supportTicket: true,
@@ -94,22 +93,5 @@ export const schema = drizzleZeroConfig(drizzleSchema, {
     testIntegerDefaultPk: true,
     testCompositePkBothDefaults: true,
     testCompositePkOneDefault: true,
-  },
-  manyToMany: {
-    user: {
-      mediums: ['message', 'medium'],
-      friends: [
-        {
-          sourceField: ['id'],
-          destTable: 'friendship',
-          destField: ['requestingId'],
-        },
-        {
-          sourceField: ['acceptingId'],
-          destTable: 'user',
-          destField: ['id'],
-        },
-      ],
-    },
   },
 });

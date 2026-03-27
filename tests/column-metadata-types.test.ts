@@ -1,6 +1,7 @@
 import type {ReadonlyJSONValue} from '@rocicorp/zero';
 import {describe, expectTypeOf, test} from 'vitest';
 import {
+  char,
   customType,
   integer,
   jsonb,
@@ -44,11 +45,15 @@ describe('column metadata types', () => {
     type EventId = string & {__brand: 'EventId'};
     type ISODateString = string & {__brand: 'ISODateString'};
     type Email = `${string}@${string}`;
+    type CountryIsoCode = 'US' | 'CA' | 'MX';
 
     const testTable = pgTable('events', {
       id: text('id').$type<EventId>().primaryKey(),
       publishedAt: timestamp('published_at').$type<ISODateString>().notNull(),
       emails: text('emails').$type<Email>().array(),
+      domicileCountry: char('domicile_country', {
+        length: 2,
+      }).$type<CountryIsoCode | null>(),
       metadata: jsonb('metadata').$type<{slug: string}>().notNull(),
     });
 
@@ -61,6 +66,9 @@ describe('column metadata types', () => {
     expectTypeOf<
       ResolveColumnCustomType<typeof testTable.emails>
     >().toEqualTypeOf<Email[]>();
+    expectTypeOf<
+      ResolveColumnCustomType<typeof testTable.domicileCountry>
+    >().toEqualTypeOf<CountryIsoCode | null>();
     expectTypeOf<
       ResolveColumnCustomType<typeof testTable.metadata>
     >().toEqualTypeOf<{slug: string}>();

@@ -1,13 +1,10 @@
 import {createSchema} from '@rocicorp/zero';
-import type {
-  AnyRelation,
-  RelationsBuilderColumnBase,
-} from 'drizzle-orm/relations';
-import {Relation} from 'drizzle-orm/relations';
+import type {RelationsBuilderColumnBase} from 'drizzle-orm/relations';
 import {getColumnTable} from 'drizzle-orm/column';
 import {Table, getTableName, getTableUniqueName, is} from 'drizzle-orm';
 import {Relations as LegacyRelations} from 'drizzle-orm/_relations';
 import {
+  type ColumnsConfig,
   createZeroTableBuilder,
   getDrizzleColumnKeyFromColumnName,
   type ZeroTableBuilderSchema,
@@ -81,18 +78,15 @@ type DrizzleToZeroSchema<
     DefaultTableColumnsConfig<TDrizzleSchema>,
 > = {
   readonly tables: {
-    readonly [K in Extract<
-      {
-        [TTableName in keyof TDrizzleSchema &
-          keyof TColumnConfig]: TDrizzleSchema[TTableName] extends Table<any>
-          ? [TColumnConfig[TTableName]] extends [false | undefined]
-            ? never
-            : TTableName
-          : never;
-      }[keyof TDrizzleSchema & keyof TColumnConfig],
-      keyof TDrizzleSchema & string
-    >]: TDrizzleSchema[K] extends Table<any>
-      ? ZeroTableBuilderSchema<K & string, TDrizzleSchema[K], any>
+    readonly [K in IncludedTableNames<
+      TDrizzleSchema,
+      TColumnConfig
+    >]: TDrizzleSchema[K] extends infer TTable extends Table<any>
+      ? ZeroTableBuilderSchema<
+          K,
+          TTable,
+          TableConfigFor<TDrizzleSchema, TColumnConfig, K>
+        >
       : never;
   };
   readonly relationships: any;
@@ -100,10 +94,54 @@ type DrizzleToZeroSchema<
   readonly enableLegacyQueries?: boolean;
 };
 
+type IncludedTableNames<
+  TDrizzleSchema extends {[K in string]: unknown},
+  TColumnConfig extends TableColumnsConfig<TDrizzleSchema>,
+> = Extract<
+  {
+    [TTableName in keyof TDrizzleSchema &
+      string]: TDrizzleSchema[TTableName] extends Table<any>
+      ? TTableName extends keyof TColumnConfig
+        ? [TColumnConfig[TTableName]] extends [false | undefined]
+          ? never
+          : TTableName
+        : never
+      : never;
+  }[keyof TDrizzleSchema & string],
+  string
+>;
+
+type TableConfigFor<
+  TDrizzleSchema extends {[K in string]: unknown},
+  TColumnConfig extends TableColumnsConfig<TDrizzleSchema>,
+  TTableName extends IncludedTableNames<TDrizzleSchema, TColumnConfig>,
+> = TDrizzleSchema[TTableName] extends infer TTable extends Table<any>
+  ? TTableName extends keyof TColumnConfig
+    ? TColumnConfig[TTableName] extends ColumnsConfig<TTable> | undefined
+      ? TColumnConfig[TTableName]
+      : never
+    : never
+  : never;
+
 type BetaRelationsTableConfig = {
   readonly table: unknown;
   readonly name: string;
   readonly relations: Record<string, unknown>;
+};
+
+type RuntimeBetaRelation = {
+  readonly fieldName: string;
+  readonly relationType: 'one' | 'many';
+  readonly sourceTable: unknown;
+  readonly targetTable: unknown;
+  readonly targetTableName: string;
+  readonly sourceColumns: readonly unknown[];
+  readonly targetColumns: readonly unknown[];
+  readonly through?: {
+    readonly source: ThroughColumn[];
+    readonly target: ThroughColumn[];
+  };
+  readonly throughTable?: unknown;
 };
 
 type NormalizedRelationHop = {
@@ -156,12 +194,24 @@ const isBetaRelationsExport = (
 
 const getBetaRelationEntries = (
   relations: Record<string, unknown>,
-): Record<string, AnyRelation> =>
+): Record<string, RuntimeBetaRelation> =>
   Object.fromEntries(
-    typedEntries(relations).filter(
-      ([, relation]) => relation instanceof Relation,
-    ),
-  ) as Record<string, AnyRelation>;
+    typedEntries(relations).filter(([, relation]) => {
+      if (typeof relation !== 'object' || relation === null) {
+        return false;
+      }
+
+      return (
+        'fieldName' in relation &&
+        'relationType' in relation &&
+        'sourceTable' in relation &&
+        'targetTable' in relation &&
+        'targetTableName' in relation &&
+        'sourceColumns' in relation &&
+        'targetColumns' in relation
+      );
+    }),
+  ) as Record<string, RuntimeBetaRelation>;
 
 const getThroughFieldNames = (columns: ThroughColumn[]): string[] =>
   columns.map(column => column._.key);
@@ -171,7 +221,7 @@ const normalizeBetaRelation = ({
   relation,
 }: {
   schema: Record<string, unknown>;
-  relation: AnyRelation;
+  relation: RuntimeBetaRelation;
 }): NormalizedRelation => {
   if (!is(relation.sourceTable, Table) || !is(relation.targetTable, Table)) {
     throw new Error(
@@ -194,16 +244,16 @@ const normalizeBetaRelation = ({
   const sourceFieldNames = relation.sourceColumns.map(
     (column: (typeof relation.sourceColumns)[number]) =>
       getDrizzleColumnKeyFromColumnName({
-        columnName: column.name,
-        table: getColumnTable(column) as unknown as Table,
+        columnName: (column as {name: string}).name,
+        table: getColumnTable(column as any) as unknown as Table,
       }),
   );
 
   const targetFieldNames = relation.targetColumns.map(
     (column: (typeof relation.targetColumns)[number]) =>
       getDrizzleColumnKeyFromColumnName({
-        columnName: column.name,
-        table: getColumnTable(column) as unknown as Table,
+        columnName: (column as {name: string}).name,
+        table: getColumnTable(column as any) as unknown as Table,
       }),
   );
 
@@ -374,7 +424,7 @@ const drizzleZeroConfig = <
     string,
     {
       table: Table;
-      relations: Record<string, AnyRelation>;
+      relations: Record<string, RuntimeBetaRelation>;
     }
   >();
   const legacyRelationExports: string[] = [];

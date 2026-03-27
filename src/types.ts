@@ -51,18 +51,41 @@ type ResolveNumberLikeCustomType<TData> = TData extends number
         ? PreserveNarrowType<TData, Date, number>
         : TData;
 
-type ResolveStringLikeCustomType<TData> = TData extends string ? TData : string;
+type Nullish = null | undefined;
 
-type ResolveBooleanLikeCustomType<TData> = TData extends boolean
-  ? PreserveNarrowType<TData, boolean, boolean>
-  : boolean;
+type ResolveNullableStringLikeCustomType<TData> = [
+  Exclude<TData, Nullish>,
+] extends [never]
+  ? string
+  : Exclude<TData, Nullish> extends string
+    ?
+        | PreserveNarrowType<Exclude<TData, Nullish>, string, string>
+        | Extract<TData, Nullish>
+    : string;
+
+type ResolveStringLikeCustomType<TData> =
+  ResolveNullableStringLikeCustomType<TData>;
+
+type ResolveNullableBooleanLikeCustomType<TData> = [
+  Exclude<TData, Nullish>,
+] extends [never]
+  ? boolean
+  : Exclude<TData, Nullish> extends boolean
+    ?
+        | PreserveNarrowType<Exclude<TData, Nullish>, boolean, boolean>
+        | Extract<TData, Nullish>
+    : boolean;
+
+type ResolveBooleanLikeCustomType<TData> =
+  ResolveNullableBooleanLikeCustomType<TData>;
 
 type ResolveJsonCustomType<TData> =
   IsUnknown<TData> extends true ? ZeroTypeToTypescriptType['json'] : TData;
 
-type ResolveArrayCustomType<TData> =
-  TData extends ReadonlyArray<unknown>
-    ? TData
+type ResolveArrayCustomType<TData> = [Exclude<TData, Nullish>] extends [never]
+  ? ZeroTypeToTypescriptType['json']
+  : Exclude<TData, Nullish> extends ReadonlyArray<unknown>
+    ? Exclude<TData, Nullish> | Extract<TData, Nullish>
     : ZeroTypeToTypescriptType['json'];
 
 /**

@@ -10,7 +10,7 @@ This is the working migration plan for moving `drizzle-zero` to `drizzle-orm@1.0
 - [x] Phase 4: Update runtime table generation to use the new beta helpers
 - [x] Phase 5: Rewrite relation discovery and normalization for beta `defineRelations(...)` / `defineRelationsPart(...)`
 - [x] Phase 6: Migrate unit fixtures and relation tests to beta syntax
-- [ ] Phase 7: Migrate integration schemas and generated outputs to beta syntax
+- [x] Phase 7: Migrate integration schemas and generated outputs to beta syntax
 - [ ] Phase 8: Update docs and migration messaging
 - [ ] Phase 9: Run verification, fix regressions, and prepare release
 
@@ -235,9 +235,9 @@ Note:
 
 Checklist:
 
-- [ ] Migrate `db/drizzle/schema.ts` to beta relation exports
-- [ ] Migrate `integration/` to beta-only relation inputs
-- [ ] Migrate `no-config-integration/` to beta-only relation inputs
+- [x] Migrate `db/drizzle/schema.ts` to beta relation exports
+- [x] Migrate `integration/` to beta-only relation inputs
+- [x] Migrate `no-config-integration/` to beta-only relation inputs
 
 Details:
 
@@ -245,6 +245,26 @@ Details:
 - Remove `manyToMany` from `integration/drizzle-zero.config.ts` so integration coverage uses beta `through(...)` exclusively.
 - Regenerate `integration/zero-schema.gen.ts` and `no-config-integration/zero-schema.gen.ts` after the migration.
 - Run the existing integration query suites and confirm the generated relationship names and shapes still match expected usage.
+
+Done:
+
+- Replaced the legacy relation exports in `db/drizzle/schema.ts` with grouped beta `defineRelationsPart(...)` exports, including beta `through(...)` replacements for the old `user.mediums` and `user.friends` integration-only relationships.
+- Removed `manyToMany` from `integration/drizzle-zero.config.ts` and updated `no-config-integration/package.json` to generate from `../db/drizzle/schema.ts`, which keeps the no-config CLI path on the beta relation source directly.
+- Regenerated `integration/zero-schema.gen.ts` and `no-config-integration/zero-schema.gen.ts`; both now include beta relationship output, and the no-config generation path no longer drops relationships.
+
+Verified:
+
+- `pnpm build`
+- `pnpm --filter @drizzle-zero/no-config-integration generate`
+- `pnpm --filter @drizzle-zero/integration generate`
+- `pnpm --filter @drizzle-zero/integration build` (fails)
+- `pnpm --filter @drizzle-zero/no-config-integration build` (fails)
+- `pnpm --filter @drizzle-zero/integration exec vitest run --typecheck.enabled false tests/integration.test.ts` (blocked by local Docker credential helper)
+- `pnpm --filter @drizzle-zero/no-config-integration exec vitest run --typecheck.enabled false tests/integration.test.ts` (blocked by local Docker credential helper)
+
+Note:
+
+- The schema/generation migration is in place, but both integration workspace `tsc` runs still surface broader beta-type issues in `db/test-utils.ts` and the integration test files, which are outside the relation syntax migration itself.
 
 ## Phase 8 - Docs And Migration Messaging
 
