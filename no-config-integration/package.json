@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "generate": "drizzle-zero generate -f -s ../db/schema.ts --skip-declare",
+    "generate": "drizzle-zero generate -f -s ../db/drizzle/schema.ts --skip-declare",
     "pretest": "pnpm generate",
     "test": "pnpm build && vitest run"
   },

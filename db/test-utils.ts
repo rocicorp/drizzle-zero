@@ -12,7 +12,6 @@ import {
   type StartedTestContainer,
 } from 'testcontainers';
 import {getShortCode} from './drizzle/types';
-import * as drizzleSchema from './schema';
 import {
   allTypes,
   analyticsDashboard,
@@ -91,7 +90,20 @@ import {
   timeEntry,
   timesheet,
   user,
-} from './schema';
+} from './drizzle/tables';
+import {
+  coreRelations,
+  crmRelations,
+  peopleRelations,
+  financeRelations,
+  projectRelations,
+  supportRelations,
+  commerceRelations,
+  documentRelations,
+  analyticsRelations,
+  marketingRelations,
+  integrationRelations,
+} from './drizzle/relations';
 
 const versionInt = parseInt(process.env.PG_VERSION ?? '16');
 const PG_PORT = 5732 + (versionInt - 16);
@@ -113,8 +125,21 @@ let startedNetwork: StartedNetwork | null = null;
 let postgresContainer: StartedPostgreSqlContainer | null = null;
 let zeroContainer: StartedTestContainer | null = null;
 
-export const db = drizzle(pool, {
-  schema: drizzleSchema,
+export const db = drizzle({
+  client: pool,
+  relations: {
+    ...coreRelations,
+    ...crmRelations,
+    ...peopleRelations,
+    ...financeRelations,
+    ...projectRelations,
+    ...supportRelations,
+    ...commerceRelations,
+    ...documentRelations,
+    ...analyticsRelations,
+    ...marketingRelations,
+    ...integrationRelations,
+  },
 });
 
 export const seed = async () => {
@@ -1679,7 +1704,7 @@ export const startZero = async (options: {getQueriesUrl: string}) => {
   const basePgUrlWithInternalPort = `${basePgUrl}@postgres-db:5432`;
 
   // Start Zero container
-  zeroContainer = await new GenericContainer(`rocicorp/zero:0.26.2-canary.1`)
+  zeroContainer = await new GenericContainer(`rocicorp/zero:1.0.0`)
     .withExposedPorts({
       container: 4848,
       host: ZERO_PORT,

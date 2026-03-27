@@ -1,31 +1,5 @@
 import type {ReadonlyJSONValue} from '@rocicorp/zero';
 
-/**
- * Represents the basic data types supported by Drizzle ORM.
- * These are the fundamental types that can be used in table column definitions.
- */
-type DrizzleDataType = 'number' | 'bigint' | 'boolean' | 'date';
-
-/**
- * Maps Drizzle data types to their corresponding Zero schema types.
- * This is a constant mapping that ensures type safety when converting between the two systems.
- */
-export const drizzleDataTypeToZeroType = {
-  number: 'number',
-  bigint: 'number',
-  boolean: 'boolean',
-  date: 'number',
-} as const satisfies Record<DrizzleDataType, string>;
-
-/**
- * Type representation of the Drizzle to Zero type mapping.
- * Extracts the type information from the drizzleDataTypeToZeroType constant.
- */
-export type DrizzleDataTypeToZeroType = typeof drizzleDataTypeToZeroType;
-
-/**
- * Represents specific Postgres column types supported by Zero.
- */
 type DrizzleColumnType =
   | 'PgText'
   | 'PgChar'
@@ -40,10 +14,6 @@ type DrizzleColumnType =
   | 'PgTimestampString'
   | 'PgArray';
 
-/**
- * Maps Postgres-specific Drizzle column types to their corresponding Zero schema types.
- * Handles special cases where Postgres types need specific Zero type representations.
- */
 export const drizzleColumnTypeToZeroType = {
   PgText: 'string',
   PgChar: 'string',
@@ -59,30 +29,18 @@ export const drizzleColumnTypeToZeroType = {
   PgArray: 'json',
 } as const satisfies Record<DrizzleColumnType, string>;
 
-/**
- * Type representation of the Postgres-specific Drizzle to Zero type mapping.
- * Extracts the type information from the drizzleColumnTypeToZeroType constant.
- */
 export type DrizzleColumnTypeToZeroType = typeof drizzleColumnTypeToZeroType;
 
-/**
- * Maps PostgreSQL SQL type names to their corresponding Zero schema types.
- */
 export const postgresTypeToZeroType = {
-  // string-like
   'text': 'string',
   'char': 'string',
   'character': 'string',
   'varchar': 'string',
   'character varying': 'string',
   'uuid': 'string',
-  'enum': 'string', // enums are emitted via zero.enumeration([...]) and are strings
-
-  // json-like
+  'enum': 'string',
   'jsonb': 'json',
   'json': 'json',
-
-  // number-like (all numeric types)
   'numeric': 'number',
   'decimal': 'number',
   'int': 'number',
@@ -98,8 +56,6 @@ export const postgresTypeToZeroType = {
   'double precision': 'number',
   'serial': 'number',
   'bigserial': 'number',
-
-  // date/time mapped to number (epoch millis)
   'date': 'number',
   'time': 'number',
   'time without time zone': 'number',
@@ -109,25 +65,223 @@ export const postgresTypeToZeroType = {
   'timestamp without time zone': 'number',
   'timestamp with time zone': 'number',
   'timestamptz': 'number',
-
-  // boolean
   'boolean': 'boolean',
   'bool': 'boolean',
 } as const satisfies Record<string, string>;
 
-/**
- * Type representation of the Postgres-specific Drizzle to Zero type mapping.
- * Extracts the type information from the postgresTypeToZeroType constant.
- */
 export type PostgresTypeToZeroType = typeof postgresTypeToZeroType;
 
-/**
- * Maps Zero schema types to their corresponding TypeScript types.
- */
 export type ZeroTypeToTypescriptType = {
   number: number;
   boolean: boolean;
   date: string;
   string: string;
   json: ReadonlyJSONValue;
+};
+
+export type ZeroColumnType = Exclude<keyof ZeroTypeToTypescriptType, 'date'>;
+
+export type ParsedDrizzleDataType = {
+  readonly raw: string;
+  readonly baseType: string;
+  readonly constraint?: string;
+};
+
+export type NormalizedDrizzleDataType =
+  | 'array'
+  | 'bigint'
+  | 'boolean'
+  | 'custom'
+  | 'date'
+  | 'json'
+  | 'number'
+  | 'string';
+
+export const normalizedDrizzleDataTypeToZeroType = {
+  array: 'json',
+  bigint: 'number',
+  boolean: 'boolean',
+  date: 'number',
+  json: 'json',
+  number: 'number',
+  string: 'string',
+} as const satisfies Record<
+  Exclude<NormalizedDrizzleDataType, 'custom'>,
+  ZeroColumnType
+>;
+
+const arrayLikeDrizzleConstraints = new Set([
+  'basecolumn',
+  'halfvector',
+  'int64vector',
+  'vector',
+]);
+
+const dateLikeStringConstraints = new Set([
+  'date',
+  'datetime',
+  'time',
+  'timestamp',
+]);
+
+const numberLikeStringConstraints = new Set([
+  'int64',
+  'numeric',
+  'uint64',
+  'unumeric',
+]);
+
+const stringLikeConstraints = new Set(['enum', 'uuid']);
+
+export type RuntimeDrizzleColumn = {
+  readonly columnType?: string;
+  readonly dataType?: string;
+  readonly enumValues?: readonly string[] | undefined;
+  readonly dimensions?: number;
+  readonly baseColumn?: unknown;
+  getSQLType(): string;
+};
+
+export const parseDrizzleDataType = (
+  dataType: string | undefined,
+): ParsedDrizzleDataType | null => {
+  if (typeof dataType !== 'string') {
+    return null;
+  }
+
+  const raw = dataType.trim();
+  if (raw.length === 0) {
+    return null;
+  }
+
+  const [baseType = raw, ...constraintParts] = raw.split(/\s+/);
+  const constraint =
+    constraintParts.length > 0 ? constraintParts.join(' ') : undefined;
+
+  return constraint === undefined
+    ? {
+        raw,
+        baseType,
+      }
+    : {
+        raw,
+        baseType,
+        constraint,
+      };
+};
+
+export const normalizeDrizzleDataType = (
+  dataType: string | undefined,
+): NormalizedDrizzleDataType | null => {
+  const parsed = parseDrizzleDataType(dataType);
+
+  if (parsed === null) {
+    return null;
+  }
+
+  const {raw, baseType, constraint} = parsed;
+
+  if (raw === 'date') {
+    return 'date';
+  }
+
+  switch (baseType) {
+    case 'array':
+      return constraint === undefined ||
+        arrayLikeDrizzleConstraints.has(constraint)
+        ? 'array'
+        : null;
+    case 'bigint':
+      return 'bigint';
+    case 'boolean':
+      return 'boolean';
+    case 'custom':
+      return 'custom';
+    case 'number':
+      return 'number';
+    case 'object':
+      if (constraint === 'json') {
+        return 'json';
+      }
+
+      return constraint === 'date' ? 'date' : null;
+    case 'string':
+      if (constraint === undefined) {
+        return 'string';
+      }
+
+      if (dateLikeStringConstraints.has(constraint)) {
+        return 'date';
+      }
+
+      if (numberLikeStringConstraints.has(constraint)) {
+        return 'number';
+      }
+
+      return stringLikeConstraints.has(constraint) ? 'string' : null;
+    default:
+      return null;
+  }
+};
+
+export const isDrizzleArrayColumn = (
+  column: Pick<RuntimeDrizzleColumn, 'baseColumn' | 'dataType' | 'dimensions'>,
+): boolean => {
+  if (typeof column.dimensions === 'number' && column.dimensions > 0) {
+    return true;
+  }
+
+  if (typeof column.baseColumn === 'object' && column.baseColumn !== null) {
+    return true;
+  }
+
+  return normalizeDrizzleDataType(column.dataType) === 'array';
+};
+
+export const resolveDrizzleDataTypeToZeroType = (
+  dataType: string | undefined,
+): ZeroColumnType | null => {
+  const normalized = normalizeDrizzleDataType(dataType);
+
+  if (normalized === null || normalized === 'custom') {
+    return null;
+  }
+
+  return normalizedDrizzleDataTypeToZeroType[normalized];
+};
+
+export const resolveDrizzleColumnToZeroType = (
+  column: RuntimeDrizzleColumn,
+): ZeroColumnType | null => {
+  if (isDrizzleArrayColumn(column)) {
+    return 'json';
+  }
+
+  if (Array.isArray(column.enumValues) && column.enumValues.length > 0) {
+    return 'string';
+  }
+
+  const columnType = column.columnType;
+  if (columnType !== undefined) {
+    const zeroType =
+      drizzleColumnTypeToZeroType[
+        columnType as keyof typeof drizzleColumnTypeToZeroType
+      ];
+
+    if (zeroType !== undefined) {
+      return zeroType;
+    }
+  }
+
+  const dataType = resolveDrizzleDataTypeToZeroType(column.dataType);
+  if (dataType !== null) {
+    return dataType;
+  }
+
+  const sqlType = column.getSQLType().toLowerCase();
+
+  return (
+    postgresTypeToZeroType[sqlType as keyof typeof postgresTypeToZeroType] ??
+    null
+  );
 };

@@ -2,6 +2,14 @@ import {z} from 'zod';
 
 export const shortCodeBrand = Symbol('ShortCode');
 
+export interface TestInterface {
+  nameInterface: 'custom-inline-interface';
+}
+
+export type TestExportedType = {
+  nameType: 'custom-inline-type';
+};
+
 export type ShortCodeType = string & {};
 
 export type ShortCodeValue = string &

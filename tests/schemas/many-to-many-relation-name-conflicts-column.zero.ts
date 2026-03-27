@@ -17,9 +17,4 @@ export const schema = drizzleZeroConfig(manyToManyConflicts, {
       groupId: true,
     },
   },
-  manyToMany: {
-    users: {
-      groups: ['usersToGroups', 'groups'], // This will conflict with the 'groups' column
-    },
-  },
 });

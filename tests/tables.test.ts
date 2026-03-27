@@ -769,6 +769,53 @@ describe('tables', () => {
     );
   });
 
+  test('pg - custom timestamp SQL type fallback', () => {
+    const customTimestampType = customType<{
+      data: Date;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'timestamp with time zone';
+      },
+    });
+
+    const customDateType = customType<{
+      data: string;
+      driverData: string;
+      notNull: false;
+    }>({
+      dataType() {
+        return 'date';
+      },
+    });
+
+    const testTable = pgTable('events', {
+      id: text().primaryKey(),
+      publishedAt: customTimestampType('published_at').notNull(),
+      scheduledFor: customTimestampType('scheduled_for'),
+      birthday: customDateType('birthday'),
+    });
+
+    const result = createZeroTableBuilder('events', testTable, {
+      id: true,
+      publishedAt: true,
+      scheduledFor: true,
+      birthday: true,
+    });
+
+    const expected = table('events')
+      .columns({
+        id: string(),
+        publishedAt: number().from('published_at'),
+        scheduledFor: number().from('scheduled_for').optional(),
+        birthday: number().optional(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+  });
+
   test('pg - custom column mapping', () => {
     const testTable = pgTable('users', {
       id: text().primaryKey(),
@@ -1725,9 +1772,9 @@ describe('tables', () => {
       boolArray: pgBoolean().array(),
       numericArray: numeric().array(),
       uuidArray: uuid().array(),
-      jsonbArray: jsonb().array().$type<{id: string; name: string}[]>(),
+      jsonbArray: jsonb().$type<{id: string; name: string}>().array(),
       enumArray: enumType().array(),
-      matrix: integer().array().array(),
+      matrix: integer('matrix').array('[][]'),
     });
 
     const result = createZeroTableBuilder('test', testTable);
@@ -1785,8 +1832,8 @@ describe('tables', () => {
   test('pg - array types with custom types', () => {
     const testTable = pgTable('test', {
       id: text().primaryKey(),
-      emails: text().array().$type<`${string}@${string}`[]>().notNull(),
-      customNumbers: integer().array().$type<1 | 2 | 3[]>(),
+      emails: text().$type<`${string}@${string}`>().array().notNull(),
+      customNumbers: integer().$type<1 | 2 | 3>().array(),
     });
 
     const result = createZeroTableBuilder('test', testTable, {
@@ -1799,7 +1846,7 @@ describe('tables', () => {
       .columns({
         id: string(),
         emails: json<`${string}@${string}`[]>(),
-        customNumbers: json<1 | 2 | 3[]>().optional(),
+        customNumbers: json<(1 | 2 | 3)[]>().optional(),
       })
       .primaryKey('id');
 
@@ -1831,7 +1878,7 @@ describe('tables', () => {
     // Should warn about unsupported interval types but not throw
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: interval - PgInterval (string)',
+        '🚨  drizzle-zero: Unsupported column type: interval - PgInterval (string interval)',
       ),
     );
 
@@ -1854,7 +1901,7 @@ describe('tables', () => {
     // Should warn about unsupported cidr types but not throw
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: cidr - PgCidr (string)',
+        '🚨  drizzle-zero: Unsupported column type: cidr - PgCidr (string cidr)',
       ),
     );
 
@@ -1877,7 +1924,7 @@ describe('tables', () => {
     // Should warn about unsupported macaddr types but not throw
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: macaddr - PgMacaddr (string)',
+        '🚨  drizzle-zero: Unsupported column type: macaddr - PgMacaddr (string macaddr)',
       ),
     );
 
@@ -1900,7 +1947,7 @@ describe('tables', () => {
     // Should warn about unsupported inet types but not throw
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: inet - PgInet (string)',
+        '🚨  drizzle-zero: Unsupported column type: inet - PgInet (string inet)',
       ),
     );
 
@@ -1923,7 +1970,7 @@ describe('tables', () => {
     // Should warn about unsupported point types but not throw
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: point - PgPointTuple (array)',
+        '🚨  drizzle-zero: Unsupported column type: point - PgPointTuple (array point)',
       ),
     );
 
@@ -1946,7 +1993,7 @@ describe('tables', () => {
     // Should warn about unsupported line types but not throw
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: line - PgLine (array)',
+        '🚨  drizzle-zero: Unsupported column type: line - PgLine (array line)',
       ),
     );
 
@@ -1972,7 +2019,7 @@ describe('tables', () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: location - PgGeometryObject (json)',
+        '🚨  drizzle-zero: Unsupported column type: location - PgGeometryObject (object geometry)',
       ),
     );
 

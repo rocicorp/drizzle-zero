@@ -16,9 +16,4 @@ export const schema = drizzleZeroConfig(manyToMany, {
       groupId: true,
     },
   },
-  manyToMany: {
-    users: {
-      groups: ['usersToGroups', 'groups'],
-    },
-  },
 });
