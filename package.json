@@ -106,16 +106,6 @@
     "vitest": "^4.1.3",
     "ws": "^8.20.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@rocicorp/zero-sqlite3",
-      "cpu-features",
-      "esbuild",
-      "msw",
-      "protobufjs",
-      "ssh2"
-    ]
-  },
-  "packageManager": "pnpm@10.18.3",
+  "packageManager": "pnpm@11.1.3",
   "prettier": "@rocicorp/prettier-config"
 }
