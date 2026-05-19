@@ -33,13 +33,13 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm run build
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Type check tests
         run: pnpm run check-types
@@ -78,7 +78,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Install Zero (matrix)
         if: matrix.zero != 'current'
@@ -88,7 +88,7 @@ jobs:
         run: pnpm run build
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Run ${{ matrix.test-suite }} tests (PG ${{ matrix.pg-version }})
         run: cd ${{ matrix.test-suite }} && PG_VERSION=${{ matrix.pg-version }} pnpm test

@@ -3,3 +3,9 @@ packages:
   - 'no-config-integration'
   - 'custom-types'
   - 'db'
+allowBuilds:
+  '@rocicorp/zero-sqlite3': true
+  cpu-features: true
+  esbuild: true
+  protobufjs: true
+  ssh2: true

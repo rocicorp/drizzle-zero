@@ -12,7 +12,8 @@
     "check-types": "tsc",
     "lint": "oxlint --type-aware --quiet",
     "test": "vitest run --typecheck --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "prepare": "pnpm run build"
   },
   "bin": {
     "drizzle-zero": "./dist/cli/index.js"
@@ -106,16 +107,6 @@
     "vitest": "^4.1.3",
     "ws": "^8.20.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@rocicorp/zero-sqlite3",
-      "cpu-features",
-      "esbuild",
-      "msw",
-      "protobufjs",
-      "ssh2"
-    ]
-  },
-  "packageManager": "pnpm@10.18.3",
+  "packageManager": "pnpm@11.1.3",
   "prettier": "@rocicorp/prettier-config"
 }
