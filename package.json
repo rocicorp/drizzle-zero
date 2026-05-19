@@ -12,7 +12,8 @@
     "check-types": "tsc",
     "lint": "oxlint --type-aware --quiet",
     "test": "vitest run --typecheck --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "prepare": "pnpm run build"
   },
   "bin": {
     "drizzle-zero": "./dist/cli/index.js"
