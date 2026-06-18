@@ -1,6 +1,7 @@
 name: Test & Build
 
 on:
+  merge_group:
   push:
     branches: [main]
   pull_request:
