@@ -9,3 +9,5 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   ssh2: true
+minimumReleaseAgeExclude:
+  - '@rocicorp/zero@1.7.0-canary.3'
