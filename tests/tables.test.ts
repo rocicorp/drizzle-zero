@@ -24,6 +24,7 @@ import {
   jsonb,
   line,
   macaddr,
+  macaddr8,
   numeric,
   boolean as pgBoolean,
   pgEnum,
@@ -43,7 +44,7 @@ import {
   varchar,
   type Precision,
 } from 'drizzle-orm/pg-core';
-import {describe, test, vi} from 'vitest';
+import {describe, expect, test, vi} from 'vitest';
 import {createZeroTableBuilder, type ColumnsConfig} from '../src';
 import {assertEqual, expectTableSchemaDeepEqual} from './utils';
 
@@ -1846,17 +1847,20 @@ describe('tables', () => {
       cidr: cidr().notNull(),
     });
 
-    createZeroTableBuilder('test', testTable, {
+    const result = createZeroTableBuilder('test', testTable, {
       id: true,
       cidr: true,
     });
 
-    // Should warn about unsupported cidr types but not throw
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: cidr - PgCidr (string)',
-      ),
-    );
+    const expected = table('test')
+      .columns({
+        id: string(),
+        cidr: string(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    expect(consoleSpy).not.toHaveBeenCalled();
 
     consoleSpy.mockRestore();
   });
@@ -1869,17 +1873,46 @@ describe('tables', () => {
       macaddr: macaddr().notNull(),
     });
 
-    createZeroTableBuilder('test', testTable, {
+    const result = createZeroTableBuilder('test', testTable, {
       id: true,
       macaddr: true,
     });
 
-    // Should warn about unsupported macaddr types but not throw
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: macaddr - PgMacaddr (string)',
-      ),
-    );
+    const expected = table('test')
+      .columns({
+        id: string(),
+        macaddr: string(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
+
+  test('pg - macaddr8 types', ({expect}) => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const testTable = pgTable('test', {
+      id: text().primaryKey(),
+      macaddr8: macaddr8().notNull(),
+    });
+
+    const result = createZeroTableBuilder('test', testTable, {
+      id: true,
+      macaddr8: true,
+    });
+
+    const expected = table('test')
+      .columns({
+        id: string(),
+        macaddr8: string(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    expect(consoleSpy).not.toHaveBeenCalled();
 
     consoleSpy.mockRestore();
   });
@@ -1892,17 +1925,61 @@ describe('tables', () => {
       inet: inet().notNull(),
     });
 
-    createZeroTableBuilder('test', testTable, {
+    const result = createZeroTableBuilder('test', testTable, {
       id: true,
       inet: true,
     });
 
-    // Should warn about unsupported inet types but not throw
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '🚨  drizzle-zero: Unsupported column type: inet - PgInet (string)',
-      ),
-    );
+    const expected = table('test')
+      .columns({
+        id: string(),
+        inet: string(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
+
+  test.each([
+    'ean13',
+    'isbn',
+    'isbn13',
+    'ismn',
+    'ismn13',
+    'issn',
+    'issn13',
+    'pg_lsn',
+    'upc',
+  ])('pg - custom text-represented scalar type: %s', typeName => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const scalarType = customType<{data: string; driverData: string}>({
+      dataType() {
+        return typeName;
+      },
+    });
+
+    const testTable = pgTable('test', {
+      id: text().primaryKey(),
+      scalar: scalarType().notNull(),
+    });
+
+    const result = createZeroTableBuilder('test', testTable, {
+      id: true,
+      scalar: true,
+    });
+
+    const expected = table('test')
+      .columns({
+        id: string(),
+        scalar: string(),
+      })
+      .primaryKey('id');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    expect(consoleSpy).not.toHaveBeenCalled();
 
     consoleSpy.mockRestore();
   });

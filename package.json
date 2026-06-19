@@ -86,7 +86,7 @@
   },
   "devDependencies": {
     "@rocicorp/prettier-config": "^0.4.0",
-    "@rocicorp/zero": "1.1.1",
+    "@rocicorp/zero": "1.7.0-canary.3",
     "@ts-morph/common": "^0.28.1",
     "@types/node": "^25.5.2",
     "@types/pg": "^8.20.0",
