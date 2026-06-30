@@ -221,6 +221,10 @@ describe('types', () => {
     expect(result?.textField).toStrictEqual('text');
     expect(result?.charField).toStrictEqual('c');
     expect(typeof result?.uuidField).toStrictEqual('string');
+    expect(result?.cidrField).toStrictEqual('192.168.0.0/24');
+    expect(result?.inetField).toStrictEqual('192.168.0.1');
+    expect(result?.macaddrField).toStrictEqual('08:00:2b:01:02:03');
+    expect(result?.macaddr8Field).toStrictEqual('08:00:2b:ff:fe:01:02:03');
     expect(result?.varcharField).toStrictEqual('varchar');
     expect(result?.booleanField).toStrictEqual(true);
     expect(result?.timeField).toStrictEqual(seededTimeFieldMs);
@@ -317,6 +321,10 @@ describe('types', () => {
         textField: 'text2',
         charField: 'f',
         uuidField: '123e4567-e89b-12d3-a456-426614174001',
+        cidrField: '10.0.0.0/8',
+        inetField: '10.0.0.1',
+        macaddrField: '08:00:2b:04:05:06',
+        macaddr8Field: '08:00:2b:ff:fe:04:05:06',
         varcharField: 'varchar2',
         booleanField: true,
         timeField: insertedTimeFieldMs,
@@ -359,6 +367,10 @@ describe('types', () => {
     expect(result?.textField).toStrictEqual('text2');
     expect(result?.charField).toStrictEqual('f');
     expect(typeof result?.uuidField).toStrictEqual('string');
+    expect(result?.cidrField).toStrictEqual('10.0.0.0/8');
+    expect(result?.inetField).toStrictEqual('10.0.0.1');
+    expect(result?.macaddrField).toStrictEqual('08:00:2b:04:05:06');
+    expect(result?.macaddr8Field).toStrictEqual('08:00:2b:ff:fe:04:05:06');
     expect(result?.varcharField).toStrictEqual('varchar2');
     expect(result?.booleanField).toStrictEqual(true);
     expect(result?.timeField).toStrictEqual(insertedTimeFieldMs);
@@ -406,6 +418,10 @@ describe('types', () => {
     expect(dbResult?.textField).toStrictEqual('text2');
     expect(dbResult?.charField).toStrictEqual('f');
     expect(dbResult?.uuidField).toBeDefined();
+    expect(dbResult?.cidrField).toStrictEqual('10.0.0.0/8');
+    expect(dbResult?.inetField).toStrictEqual('10.0.0.1');
+    expect(dbResult?.macaddrField).toStrictEqual('08:00:2b:04:05:06');
+    expect(dbResult?.macaddr8Field).toStrictEqual('08:00:2b:ff:fe:04:05:06');
     expect(dbResult?.varcharField).toStrictEqual('varchar2');
     expect(dbResult?.booleanField).toStrictEqual(true);
     expect(dbResult?.timeField).toStrictEqual('09:08:07.654');

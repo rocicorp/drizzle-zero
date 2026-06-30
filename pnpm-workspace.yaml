@@ -9,3 +9,5 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   ssh2: true
+minimumReleaseAgeExclude:
+  - '@rocicorp/zero'

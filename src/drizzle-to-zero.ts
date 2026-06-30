@@ -31,6 +31,10 @@ type DrizzleColumnType =
   | 'PgChar'
   | 'PgVarchar'
   | 'PgUUID'
+  | 'PgCidr'
+  | 'PgInet'
+  | 'PgMacaddr'
+  | 'PgMacaddr8'
   | 'PgEnumColumn'
   | 'PgJsonb'
   | 'PgJson'
@@ -49,6 +53,10 @@ export const drizzleColumnTypeToZeroType = {
   PgChar: 'string',
   PgVarchar: 'string',
   PgUUID: 'string',
+  PgCidr: 'string',
+  PgInet: 'string',
+  PgMacaddr: 'string',
+  PgMacaddr8: 'string',
   PgEnumColumn: 'string',
   PgJsonb: 'json',
   PgJson: 'json',
@@ -75,6 +83,19 @@ export const postgresTypeToZeroType = {
   'character': 'string',
   'varchar': 'string',
   'character varying': 'string',
+  'cidr': 'string',
+  'ean13': 'string',
+  'inet': 'string',
+  'isbn': 'string',
+  'isbn13': 'string',
+  'ismn': 'string',
+  'ismn13': 'string',
+  'issn': 'string',
+  'issn13': 'string',
+  'macaddr': 'string',
+  'macaddr8': 'string',
+  'pg_lsn': 'string',
+  'upc': 'string',
   'uuid': 'string',
   'enum': 'string', // enums are emitted via zero.enumeration([...]) and are strings
 
