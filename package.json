@@ -88,7 +88,7 @@
     "@rocicorp/prettier-config": "^0.4.0",
     "@rocicorp/zero": "1.7.0",
     "@ts-morph/common": "^0.28.1",
-    "@types/node": "^25.5.2",
+    "@types/node": "^26.1.0",
     "@types/pg": "^8.20.0",
     "@types/pluralize": "^0.0.33",
     "@types/ws": "^8.18.1",
