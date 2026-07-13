@@ -75,4 +75,4 @@ jobs:
           path: dist/npm
 
       - name: Publish package
-        run: pnpm publish dist/npm/*.tgz --provenance --access public --no-git-checks
+        run: pnpm publish dist/npm/*.tgz --tag beta --provenance --access public --no-git-checks

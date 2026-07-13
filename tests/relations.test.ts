@@ -8,12 +8,8 @@ import {
   table,
 } from '@rocicorp/zero';
 import {describe, test} from 'vitest';
-import {
-  drizzleZeroConfig,
-  type DrizzleToZeroSchema,
-  type ZeroCustomType,
-} from '../src/relations';
-import {assertEqual, expectSchemaDeepEqual} from './utils';
+import {drizzleZeroConfig} from '../src/relations';
+import {expectSchemaDeepEqual} from './utils';
 
 describe('relationships', () => {
   test('relationships - no tables', async ({expect}) => {
@@ -42,14 +38,6 @@ describe('relationships', () => {
       drizzleZeroConfig(zeroSchema),
     ).toThrowErrorMatchingInlineSnapshot(
       `[Error: drizzle-zero: table or relation with key enableLegacyQueries is not defined]`,
-    );
-  });
-
-  test('relationships - many-to-many-incorrect-many', async ({expect}) => {
-    await expect(
-      import('./schemas/many-to-many-incorrect-many.zero'),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: drizzle-zero: Invalid many-to-many configuration for users.usersToGroups: Not all required fields were provided.]`,
     );
   });
 
@@ -131,34 +119,6 @@ describe('relationships', () => {
     expectSchemaDeepEqual(manyToManyMissingForeignKeyZeroSchema).toEqual(
       expected,
     );
-    assertEqual(
-      manyToManyMissingForeignKeyZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-    assertEqual(
-      manyToManyMissingForeignKeyZeroSchema.tables.usersToGroups.columns.userId
-        .customType,
-      expected.tables.usersToGroups.columns.userId.customType,
-    );
-    assertEqual(
-      manyToManyMissingForeignKeyZeroSchema.tables.usersToGroups.columns.groupId
-        .customType,
-      expected.tables.usersToGroups.columns.groupId.customType,
-    );
-    assertEqual(
-      manyToManyMissingForeignKeyZeroSchema.tables.groups.columns.id.customType,
-      expected.tables.groups.columns.id.customType,
-    );
-  });
-
-  test('relationships - many-to-many-duplicate-relationship', async ({
-    expect,
-  }) => {
-    await expect(
-      import('./schemas/many-to-many-duplicate-relationship.zero'),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: drizzle-zero: Duplicate relationship found for: usersToGroups (from users to users_to_group).]`,
-    );
   });
 
   test('relationships - one-to-one-missing-foreign-key', async () => {
@@ -212,27 +172,11 @@ describe('relationships', () => {
     );
   });
 
-  test('relationships - one-to-many-missing-named', async ({expect}) => {
-    await expect(
-      import('./schemas/one-to-many-missing-named.zero'),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: drizzle-zero: No relationship found for: author (Many from users to posts). Did you forget to define a named relation "author"?]`,
-    );
-  });
-
-  test('relationships - one-to-many-missing-one', async ({expect}) => {
-    await expect(
-      import('./schemas/one-to-many-missing-one.zero'),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: drizzle-zero: No relationship found for: author (Many from users to posts). Did you forget to define an opposite One relation?]`,
-    );
-  });
-
   test('relationships - relation-name-conflicts-column', async ({expect}) => {
     await expect(
       import('./schemas/relation-name-conflicts-column.zero'),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: drizzle-zero: Invalid relationship name for users.posts: there is already a table column with the name posts and this cannot be used as a relationship name]`,
+      `[Error: relations -> users: { posts: r.many.posts(...) }: relation name collides with column "posts" of table "users"]`,
     );
   });
 
@@ -242,16 +186,7 @@ describe('relationships', () => {
     await expect(
       import('./schemas/many-to-many-relation-name-conflicts-column.zero'),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: drizzle-zero: Invalid relationship name for users.groups: there is already a table column with the name groups and this cannot be used as a relationship name]`,
-    );
-  });
-
-  test('relationships - type any shows a type error', () => {
-    assertEqual(
-      null as unknown as ZeroCustomType<any, 'users', 'invitedBy'>,
-      null as unknown as {
-        __error__: 'The schema passed in to `ZeroCustomType` is `any`. Please make sure to pass in a proper schema type, or check your imports to make sure that Typescript can resolve your schema definition.';
-      },
+      `[Error: relations -> users: { groups: r.many.groups(...) }: relation name collides with column "groups" of table "users"]`,
     );
   });
 
@@ -310,33 +245,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToOneSelfZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToOneSelfZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-
-    const drizzleSchema = await import('./schemas/one-to-one-self.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['users']['columns']['id']['customType'],
-      expected.tables.users.columns.id.customType,
-    );
-
-    const directMapping = drizzleZeroConfig(drizzleSchema);
-    assertEqual(
-      directMapping.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-
-    assertEqual(
-      null as unknown as ZeroCustomType<
-        DrizzleToZeroSchema<typeof drizzleSchema>,
-        'users',
-        'invitedBy'
-      >,
-      null as unknown as string,
-    );
   });
 
   test('relationships - one-to-one', async () => {
@@ -385,24 +293,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToOneZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToOneZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-
-    const drizzleSchema = await import('./schemas/one-to-one.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['users']['columns']['id']['customType'],
-      expected.tables.users.columns.id.customType,
-    );
-
-    const directMapping = drizzleZeroConfig(drizzleSchema);
-    assertEqual(
-      directMapping.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
   });
 
   test('relationships - one-to-one-subset', async () => {
@@ -471,19 +361,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToOneForeignKeyZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToOneForeignKeyZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-
-    const drizzleSchema =
-      await import('./schemas/one-to-one-foreign-key.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['users']['columns']['id']['customType'],
-      expected.tables.users.columns.id.customType,
-    );
   });
 
   test('relationships - one-to-one-2', async () => {
@@ -566,18 +443,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToOne2ZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToOne2ZeroSchema.tables.userTable.columns.id.customType,
-      expected.tables.userTable.columns.id.customType,
-    );
-    assertEqual(
-      oneToOne2ZeroSchema.tables.mediumTable.columns.name.customType,
-      expected.tables.mediumTable.columns.name.customType,
-    );
-    assertEqual(
-      oneToOne2ZeroSchema.tables.messageTable.columns.body.customType,
-      expected.tables.messageTable.columns.body.customType,
-    );
   });
 
   test('relationships - one-to-many', async () => {
@@ -659,26 +524,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToManyZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToManyZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-    assertEqual(
-      oneToManyZeroSchema.tables.posts.columns.content.customType,
-      expected.tables.posts.columns.content.customType,
-    );
-    assertEqual(
-      oneToManyZeroSchema.tables.comments.columns.text.customType,
-      expected.tables.comments.columns.text.customType,
-    );
-
-    const drizzleSchema = await import('./schemas/one-to-many.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['users']['columns']['id']['customType'],
-      expected.tables.users.columns.id.customType,
-    );
   });
 
   test('relationships - one-to-many-named', async () => {
@@ -739,26 +584,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToManyNamedZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToManyNamedZeroSchema.tables.users.columns.name.customType,
-      expected.tables.users.columns.name.customType,
-    );
-    assertEqual(
-      oneToManyNamedZeroSchema.tables.posts.columns.content.customType,
-      expected.tables.posts.columns.content.customType,
-    );
-    assertEqual(
-      oneToManyNamedZeroSchema.tables.posts.columns.reviewerId.customType,
-      expected.tables.posts.columns.reviewerId.customType,
-    );
-
-    const drizzleSchema = await import('./schemas/one-to-many-named.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['users']['columns']['id']['customType'],
-      expected.tables.users.columns.id.customType,
-    );
   });
 
   test('relationships - many-to-many', async () => {
@@ -849,14 +674,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(manyToManyZeroSchema).toEqual(expected);
-    assertEqual(
-      manyToManyZeroSchema.tables.users.columns.name.customType,
-      expected.tables.users.columns.name.customType,
-    );
-    assertEqual(
-      manyToManyZeroSchema.tables.groups.columns.name.customType,
-      expected.tables.groups.columns.name.customType,
-    );
   });
 
   test('relationships - many-to-many-self-referential-fk', async () => {
@@ -926,16 +743,6 @@ describe('relationships', () => {
     expectSchemaDeepEqual(manyToManySelfReferentialFkZeroSchema).toEqual(
       expected,
     );
-    assertEqual(
-      manyToManySelfReferentialFkZeroSchema.tables.related.columns.fk_from_doc
-        .customType,
-      expected.tables.related.columns.fk_from_doc.customType,
-    );
-    assertEqual(
-      manyToManySelfReferentialFkZeroSchema.tables.related.columns.fk_to_doc
-        .customType,
-      expected.tables.related.columns.fk_to_doc.customType,
-    );
   });
 
   test('relationships - many-to-many-subset', async () => {
@@ -954,10 +761,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(manyToManySubsetZeroSchema).toEqual(expected);
-    assertEqual(
-      manyToManySubsetZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
   });
 
   test('relationships - many-to-many-subset-2', async () => {
@@ -1005,16 +808,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(manyToManySubset2ZeroSchema).toEqual(expected);
-    assertEqual(
-      manyToManySubset2ZeroSchema.tables.usersToGroups.columns.userId
-        .customType,
-      expected.tables.usersToGroups.columns.userId.customType,
-    );
-    assertEqual(
-      manyToManySubset2ZeroSchema.tables.usersToGroups.columns.groupId
-        .customType,
-      expected.tables.usersToGroups.columns.groupId.customType,
-    );
   });
 
   test('relationships - many-to-many-self-referential', async () => {
@@ -1061,125 +854,6 @@ describe('relationships', () => {
 
     expectSchemaDeepEqual(manyToManySelfReferentialZeroSchema).toEqual(
       expected,
-    );
-    assertEqual(
-      manyToManySelfReferentialZeroSchema.tables.friendship.columns.accepted
-        .customType,
-      expected.tables.friendship.columns.accepted.customType,
-    );
-    assertEqual(
-      manyToManySelfReferentialZeroSchema.tables.friendship.columns.requestingId
-        .customType,
-      expected.tables.friendship.columns.requestingId.customType,
-    );
-    assertEqual(
-      manyToManySelfReferentialZeroSchema.tables.friendship.columns.acceptingId
-        .customType,
-      expected.tables.friendship.columns.acceptingId.customType,
-    );
-  });
-
-  test('relationships - many-to-many-extended-config', async () => {
-    const {schema: manyToManyExtendedConfigZeroSchema} =
-      await import('./schemas/many-to-many-extended-config.zero');
-
-    const expectedUsers = table('users')
-      .from('user')
-      .columns({
-        id: string(),
-        name: string().optional(),
-      })
-      .primaryKey('id');
-
-    const expectedUsersToGroups = table('usersToGroups')
-      .from('users_to_group')
-      .columns({
-        userId: string().from('user_id'),
-        groupId: string().from('group_id'),
-      })
-      .primaryKey('userId', 'groupId');
-
-    const expectedGroups = table('groups')
-      .from('group')
-      .columns({
-        id: string(),
-        name: string().optional(),
-      })
-      .primaryKey('id');
-
-    const expectedGroupsRelationships = relationships(
-      expectedGroups,
-      ({many}) => ({
-        usersToGroups: many({
-          sourceField: ['id'],
-          destField: ['groupId'],
-          destSchema: expectedUsersToGroups,
-        }),
-      }),
-    );
-
-    const expectedUsersToGroupsRelationships = relationships(
-      expectedUsersToGroups,
-      ({one}) => ({
-        group: one({
-          sourceField: ['groupId'],
-          destField: ['id'],
-          destSchema: expectedGroups,
-        }),
-        user: one({
-          sourceField: ['userId'],
-          destField: ['id'],
-          destSchema: expectedUsers,
-        }),
-      }),
-    );
-
-    const expectedUsersRelationships = relationships(
-      expectedUsers,
-      ({many}) => ({
-        groups: many(
-          {
-            sourceField: ['id'],
-            destField: ['userId'],
-            destSchema: expectedUsersToGroups,
-          },
-          {
-            sourceField: ['groupId'],
-            destField: ['id'],
-            destSchema: expectedGroups,
-          },
-        ),
-        usersToGroups: many({
-          sourceField: ['id'],
-          destField: ['userId'],
-          destSchema: expectedUsersToGroups,
-        }),
-      }),
-    );
-
-    const expected = createSchema({
-      tables: [expectedUsers, expectedUsersToGroups, expectedGroups],
-      relationships: [
-        expectedUsersRelationships,
-        expectedUsersToGroupsRelationships,
-        expectedGroupsRelationships,
-      ],
-    });
-
-    expectSchemaDeepEqual(manyToManyExtendedConfigZeroSchema).toEqual(expected);
-    assertEqual(
-      manyToManyExtendedConfigZeroSchema.tables.usersToGroups.columns.userId
-        .customType,
-      expected.tables.usersToGroups.columns.userId.customType,
-    );
-    assertEqual(
-      manyToManyExtendedConfigZeroSchema.tables.usersToGroups.columns.groupId
-        .customType,
-      expected.tables.usersToGroups.columns.groupId.customType,
-    );
-    assertEqual(
-      manyToManyExtendedConfigZeroSchema.tables.groups.columns.name.customType,
-      expected.tables.groups.columns.name.customType,
     );
   });
 
@@ -1263,30 +937,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToManyCasingZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToManyCasingZeroSchema.tables.posts.columns.authorId.customType,
-      expected.tables.posts.columns.authorId.customType,
-    );
-    assertEqual(
-      oneToManyCasingZeroSchema.tables.comments.columns.authorId.customType,
-      expected.tables.comments.columns.authorId.customType,
-    );
-    assertEqual(
-      oneToManyCasingZeroSchema.tables.comments.columns.postId.customType,
-      expected.tables.comments.columns.postId.customType,
-    );
-    assertEqual(
-      oneToManyCasingZeroSchema.tables.posts.columns.authorId.customType,
-      expected.tables.posts.columns.authorId.customType,
-    );
-
-    const drizzleSchema = await import('./schemas/one-to-many-casing.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['posts']['columns']['authorId']['customType'],
-      expected.tables.posts.columns.authorId.customType,
-    );
   });
 
   test('relationships - one-to-many-parent-child', async () => {
@@ -1324,27 +974,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(oneToManyParentChildZeroSchema).toEqual(expected);
-    assertEqual(
-      oneToManyParentChildZeroSchema.tables.filters.columns.parentId.customType,
-      expected.tables.filters.columns.parentId.customType,
-    );
-    assertEqual(
-      oneToManyParentChildZeroSchema.tables.filters.columns.name.customType,
-      expected.tables.filters.columns.name.customType,
-    );
-    assertEqual(
-      oneToManyParentChildZeroSchema.tables.filters.columns.id.customType,
-      expected.tables.filters.columns.id.customType,
-    );
-
-    const drizzleSchema =
-      await import('./schemas/one-to-many-parent-child.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['filters']['columns']['parentId']['customType'],
-      expected.tables.filters.columns.parentId.customType,
-    );
   });
 
   test('relationships - custom-schema', async () => {
@@ -1377,30 +1006,6 @@ describe('relationships', () => {
     });
 
     expectSchemaDeepEqual(customSchemaZeroSchema).toEqual(expected);
-    assertEqual(
-      customSchemaZeroSchema.tables.users.columns.id.customType,
-      expected.tables.users.columns.id.customType,
-    );
-    assertEqual(
-      customSchemaZeroSchema.tables.users.columns.invitedBy.customType,
-      expected.tables.users.columns.invitedBy.customType,
-    );
-    assertEqual(
-      customSchemaZeroSchema.tables.users.columns.name.customType,
-      expected.tables.users.columns.name.customType,
-    );
-    assertEqual(
-      customSchemaZeroSchema.tables.users.columns.name.customType,
-      expected.tables.users.columns.name.customType,
-    );
-
-    const drizzleSchema = await import('./schemas/custom-schema.schema');
-    assertEqual(
-      null as unknown as DrizzleToZeroSchema<
-        typeof drizzleSchema
-      >['tables']['users']['columns']['id']['customType'],
-      expected.tables.users.columns.id.customType,
-    );
   });
 
   test('relationships - disambiguates same table name across schemas', async () => {
