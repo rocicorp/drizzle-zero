@@ -82,8 +82,7 @@ export interface FeatureFlag {
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
 export type DeepReadonly<T> = T extends
-  | Primitive
-  | ((...args: never[]) => unknown)
+  Primitive | ((...args: never[]) => unknown)
   ? T
   : {readonly [K in keyof T]: DeepReadonly<T[K]>};
 

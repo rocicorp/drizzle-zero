@@ -55,12 +55,10 @@ export function resolveCustomTypes({
   });
 
   resolverFile.addImportDeclarations(
-    schemaImports.map(
-      (structure): ImportDeclarationStructure => ({
-        kind: StructureKind.ImportDeclaration,
-        ...structure,
-      }),
-    ),
+    schemaImports.map((structure): ImportDeclarationStructure => ({
+      kind: StructureKind.ImportDeclaration,
+      ...structure,
+    })),
   );
 
   resolverFile.addImportDeclaration({

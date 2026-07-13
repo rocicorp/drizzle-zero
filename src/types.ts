@@ -19,9 +19,11 @@ export type TableColumnsConfig<TDrizzleSchema extends Record<string, unknown>> =
       /**
        * The columns to include in the Zero schema.
        */
-      readonly [K in keyof TDrizzleSchema as TDrizzleSchema[K] extends Table<any>
-        ? K
-        : never]: TDrizzleSchema[K] extends Table<any>
+      readonly [
+        K in keyof TDrizzleSchema as TDrizzleSchema[K] extends Table<any>
+          ? K
+          : never
+      ]: TDrizzleSchema[K] extends Table<any>
         ? ColumnsConfig<TDrizzleSchema[K]>
         : never;
     }>
@@ -34,9 +36,11 @@ export type TableColumnsConfig<TDrizzleSchema extends Record<string, unknown>> =
 export type DefaultTableColumnsConfig<
   TDrizzleSchema extends Record<string, unknown>,
 > = Flatten<{
-  readonly [K in keyof TDrizzleSchema as TDrizzleSchema[K] extends Table<any>
-    ? K
-    : never]: TDrizzleSchema[K] extends Table<any>
+  readonly [
+    K in keyof TDrizzleSchema as TDrizzleSchema[K] extends Table<any>
+      ? K
+      : never
+  ]: TDrizzleSchema[K] extends Table<any>
     ? DefaultColumnsConfig<TDrizzleSchema[K]>
     : never;
 }>;

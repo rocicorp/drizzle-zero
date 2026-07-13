@@ -168,10 +168,9 @@ export type ZeroColumns<
   TTable extends Table,
   TColumnConfig extends ColumnsConfig<TTable> | undefined,
 > = Flatten<{
-  [KColumn in IncludedColumnKeys<
-    TTable,
-    TColumnConfig
-  >]: TColumnConfig extends object
+  [
+    KColumn in IncludedColumnKeys<TTable, TColumnConfig>
+  ]: TColumnConfig extends object
     ? KColumn extends keyof TColumnConfig
       ? TColumnConfig[KColumn] extends ColumnBuilder<any>
         ? TColumnConfig[KColumn]['schema']
