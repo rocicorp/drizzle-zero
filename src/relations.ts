@@ -78,10 +78,9 @@ type DrizzleToZeroSchema<
     DefaultTableColumnsConfig<TDrizzleSchema>,
 > = {
   readonly tables: {
-    readonly [K in IncludedTableNames<
-      TDrizzleSchema,
-      TColumnConfig
-    >]: TDrizzleSchema[K] extends infer TTable extends Table<any>
+    readonly [
+      K in IncludedTableNames<TDrizzleSchema, TColumnConfig>
+    ]: TDrizzleSchema[K] extends infer TTable extends Table<any>
       ? ZeroTableBuilderSchema<
           K,
           TTable,
@@ -99,8 +98,9 @@ type IncludedTableNames<
   TColumnConfig extends TableColumnsConfig<TDrizzleSchema>,
 > = Extract<
   {
-    [TTableName in keyof TDrizzleSchema &
-      string]: TDrizzleSchema[TTableName] extends Table<any>
+    [
+      TTableName in keyof TDrizzleSchema & string
+    ]: TDrizzleSchema[TTableName] extends Table<any>
       ? TTableName extends keyof TColumnConfig
         ? [TColumnConfig[TTableName]] extends [false | undefined]
           ? never

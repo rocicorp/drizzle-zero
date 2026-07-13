@@ -3,22 +3,13 @@ import type {ZeroColumnType, ZeroTypeToTypescriptType} from './drizzle-to-zero';
 import type {ColumnsConfig} from './tables';
 
 type ArrayLikeDrizzleConstraint =
-  | 'basecolumn'
-  | 'halfvector'
-  | 'int64vector'
-  | 'vector';
+  'basecolumn' | 'halfvector' | 'int64vector' | 'vector';
 
 type DateLikeDrizzleStringConstraint =
-  | 'date'
-  | 'datetime'
-  | 'time'
-  | 'timestamp';
+  'date' | 'datetime' | 'time' | 'timestamp';
 
 type NumberLikeDrizzleStringConstraint =
-  | 'int64'
-  | 'numeric'
-  | 'uint64'
-  | 'unumeric';
+  'int64' | 'numeric' | 'uint64' | 'unumeric';
 
 type StringLikeDrizzleConstraint = 'enum' | 'uuid';
 
@@ -58,9 +49,8 @@ type ResolveNullableStringLikeCustomType<TData> = [
 ] extends [never]
   ? string
   : Exclude<TData, Nullish> extends string
-    ?
-        | PreserveNarrowType<Exclude<TData, Nullish>, string, string>
-        | Extract<TData, Nullish>
+    ? | PreserveNarrowType<Exclude<TData, Nullish>, string, string>
+      | Extract<TData, Nullish>
     : string;
 
 type ResolveStringLikeCustomType<TData> =
@@ -71,9 +61,8 @@ type ResolveNullableBooleanLikeCustomType<TData> = [
 ] extends [never]
   ? boolean
   : Exclude<TData, Nullish> extends boolean
-    ?
-        | PreserveNarrowType<Exclude<TData, Nullish>, boolean, boolean>
-        | Extract<TData, Nullish>
+    ? | PreserveNarrowType<Exclude<TData, Nullish>, boolean, boolean>
+      | Extract<TData, Nullish>
     : boolean;
 
 type ResolveBooleanLikeCustomType<TData> =
@@ -273,9 +262,7 @@ export type ResolveColumnCustomType<TColumn> =
             : NormalizedColumnDataType<TColumn> extends 'boolean'
               ? ResolveBooleanLikeCustomType<ColumnData<TColumn>>
               : NormalizedColumnDataType<TColumn> extends
-                    | 'bigint'
-                    | 'date'
-                    | 'number'
+                    'bigint' | 'date' | 'number'
                 ? ResolveNumberLikeCustomType<ColumnData<TColumn>>
                 : unknown;
 
