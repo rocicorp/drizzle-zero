@@ -156,8 +156,9 @@ type ManyTableConfig<
  * The junction table and destination table must be different from the source table and each other.
  */
 type ManyConfig<TDrizzleSchema extends Record<string, unknown>> = {
-  readonly [TSourceTableName in keyof TDrizzleSchema &
-    string]?: ManyTableConfig<TDrizzleSchema, TSourceTableName>;
+  readonly [
+    TSourceTableName in keyof TDrizzleSchema & string
+  ]?: ManyTableConfig<TDrizzleSchema, TSourceTableName>;
 };
 
 /**
@@ -169,17 +170,20 @@ type DrizzleToZeroSchema<
     DefaultTableColumnsConfig<TDrizzleSchema>,
 > = {
   readonly tables: {
-    readonly [K in Extract<
-      {
-        [TTableName in keyof TDrizzleSchema &
-          keyof TColumnConfig]: TDrizzleSchema[TTableName] extends Table<any>
-          ? [TColumnConfig[TTableName]] extends [false | undefined]
-            ? never
-            : TTableName
-          : never;
-      }[keyof TDrizzleSchema & keyof TColumnConfig],
-      keyof TDrizzleSchema & string
-    >]: TDrizzleSchema[K] extends Table<any>
+    readonly [
+      K in Extract<
+        {
+          [
+            TTableName in keyof TDrizzleSchema & keyof TColumnConfig
+          ]: TDrizzleSchema[TTableName] extends Table<any>
+            ? [TColumnConfig[TTableName]] extends [false | undefined]
+              ? never
+              : TTableName
+            : never;
+        }[keyof TDrizzleSchema & keyof TColumnConfig],
+        keyof TDrizzleSchema & string
+      >
+    ]: TDrizzleSchema[K] extends Table<any>
       ? ZeroTableBuilderSchema<
           K & string,
           TDrizzleSchema[K],

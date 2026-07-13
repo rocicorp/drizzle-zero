@@ -269,14 +269,12 @@ function cli() {
               process.exit(1);
             }
           } catch (e: unknown) {
-            if (
-              !(
-                typeof e === 'object' &&
-                e !== null &&
-                'code' in e &&
-                e.code === 'ENOENT'
-              )
-            ) {
+            if (!(
+              typeof e === 'object' &&
+              e !== null &&
+              'code' in e &&
+              e.code === 'ENOENT'
+            )) {
               throw e;
             }
           }

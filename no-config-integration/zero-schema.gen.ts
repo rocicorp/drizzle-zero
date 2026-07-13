@@ -374,14 +374,7 @@ const analyticsDashboardTable = {
           | {
               field: string;
               operator:
-                | 'in'
-                | 'eq'
-                | 'neq'
-                | 'gt'
-                | 'gte'
-                | 'lt'
-                | 'lte'
-                | 'nin';
+                'in' | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'nin';
               value: string | number | boolean | (string | number)[];
             }[]
           | undefined;
