@@ -7,6 +7,7 @@ import {
   type SourceFile,
   VariableDeclarationKind,
 } from 'ts-morph';
+import {canonicalizeZeroSchema} from '../canonicalize';
 import type {getConfigFromFile} from './config';
 import type {getDefaultConfig} from './drizzle-kit';
 import {COLUMN_SEPARATOR, resolveCustomTypes} from './type-resolution';
@@ -82,7 +83,7 @@ function allocateIdentifiers(
 
 export function getGeneratedSchema({
   tsProject,
-  result,
+  result: rawResult,
   outputFilePath,
   jsExtensionOverride = 'auto',
   skipTypes = false,
@@ -105,6 +106,13 @@ export function getGeneratedSchema({
   enableLegacyQueries?: boolean;
   debug?: boolean;
 }) {
+  // Applied again here, not just in `drizzleZeroConfig`, so a hand-written or
+  // otherwise externally produced schema still generates a canonical file.
+  const result = {
+    ...rawResult,
+    zeroSchema: canonicalizeZeroSchema(rawResult.zeroSchema),
+  } as typeof rawResult;
+
   // Auto-detect if .js extensions are needed based on tsconfig
   // unless explicitly overridden by the user
   let needsJsExtension = jsExtensionOverride === 'force';

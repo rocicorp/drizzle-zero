@@ -1,5 +1,6 @@
 import type {Schema, TableSchema, relationships} from '@rocicorp/zero';
 import {expect} from 'vitest';
+import {canonicalizeZeroSchema} from '../src/canonicalize';
 
 export type ZeroSchema = Schema;
 
@@ -92,7 +93,12 @@ export function expectRelationsSchemaDeepEqual<S extends RelationshipsSchema>(
 
 export function expectSchemaDeepEqual(actual: ZeroSchema) {
   return {
-    toEqual(expected: ZeroSchema) {
+    // Fixtures are written in whatever order reads best, so the expected
+    // schema is canonicalized before comparing. `actual` is left alone, so a
+    // schema that came out in the wrong order still fails.
+    toEqual(rawExpected: ZeroSchema) {
+      const expected = canonicalizeZeroSchema(rawExpected);
+
       expect({
         __testKey: 'tables',
         keys: Object.keys(actual.tables),

@@ -1,4 +1,5 @@
 import {createSchema} from '@rocicorp/zero';
+import {canonicalizeZeroSchema} from './canonicalize';
 import {Table, getTableName, getTableUniqueName, is} from 'drizzle-orm';
 import {Relations as LegacyRelations} from 'drizzle-orm/_relations';
 import {getColumnTable} from 'drizzle-orm/column';
@@ -622,13 +623,15 @@ const drizzleZeroConfig = <
     }
   }
 
-  const finalSchema = createSchema({
-    tables,
-    relationships: Object.entries(relationships).map(([name, value]) => ({
-      name,
-      relationships: value,
-    })),
-  } as any) as unknown as DrizzleToZeroSchema<TDrizzleSchema, TColumnConfig>;
+  const finalSchema = canonicalizeZeroSchema(
+    createSchema({
+      tables,
+      relationships: Object.entries(relationships).map(([name, value]) => ({
+        name,
+        relationships: value,
+      })),
+    } as any),
+  ) as unknown as DrizzleToZeroSchema<TDrizzleSchema, TColumnConfig>;
 
   debugLog(
     config?.debug,
