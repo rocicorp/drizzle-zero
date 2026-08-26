@@ -1142,6 +1142,107 @@ describe('getGeneratedSchema', () => {
     );
   });
 
+  it('gives colliding generated names distinct, key-derived identifiers', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const table = (name: string) => ({
+      name,
+      primaryKey: ['id'] as [string],
+      columns: {
+        id: {type: 'number' as const, optional: false, customType: null},
+      },
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            // `user` and `users` both singularize to `User`.
+            user: table('user'),
+            users: table('users'),
+            // `row` collides with the imported `Row`, `schema` with the
+            // generated `Schema` type alias.
+            row: table('row'),
+            schema: table('schema'),
+          },
+          relationships: {},
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+      skipBuilder: true,
+    });
+
+    const declaredTypeNames = [
+      ...generatedSchema.matchAll(/^export type (\w+)\b/gm),
+    ].map(match => match[1]);
+
+    expect(declaredTypeNames).toEqual([...new Set(declaredTypeNames)]);
+    expect(declaredTypeNames).toContain('Schema');
+    expect(declaredTypeNames).not.toContain('User');
+    expect(declaredTypeNames).not.toContain('Row');
+  });
+
+  it('names table consts independently of declaration order', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const table = (name: string) => ({
+      name,
+      primaryKey: ['id'] as [string],
+      columns: {
+        id: {type: 'number' as const, optional: false, customType: null},
+      },
+    });
+
+    // Both sanitize to `userProfileTable`.
+    const snake = table('user_profile');
+    const camel = table('userProfile');
+
+    const constNameFor = (
+      tables: Record<string, typeof snake>,
+      marker: string,
+    ) => {
+      const generated = getGeneratedSchema({
+        tsProject,
+        result: {
+          type: 'config',
+          zeroSchema: {tables, relationships: {}},
+          exportName: 'schema',
+          zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+        },
+        outputFilePath,
+        skipTypes: true,
+        skipBuilder: true,
+      });
+
+      return generated.match(
+        new RegExp(`const (\\w+) = \\{[^}]*?"name": "${marker}"`, 's'),
+      )?.[1];
+    };
+
+    expect(
+      constNameFor({user_profile: snake, userProfile: camel}, 'user_profile'),
+    ).toBe(
+      constNameFor({userProfile: camel, user_profile: snake}, 'user_profile'),
+    );
+    expect(
+      constNameFor({user_profile: snake, userProfile: camel}, 'userProfile'),
+    ).toBe(
+      constNameFor({userProfile: camel, user_profile: snake}, 'userProfile'),
+    );
+  });
+
   it('should handle table names with various casing correctly', () => {
     const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
       tsProject,

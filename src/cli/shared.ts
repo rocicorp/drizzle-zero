@@ -1,4 +1,5 @@
 import camelCase from 'camelcase';
+import {createHash} from 'node:crypto';
 import pluralize from 'pluralize';
 import {
   type CodeBlockWriter,
@@ -9,6 +10,75 @@ import {
 import type {getConfigFromFile} from './config';
 import type {getDefaultConfig} from './drizzle-kit';
 import {COLUMN_SEPARATOR, resolveCustomTypes} from './type-resolution';
+
+/**
+ * Distinguishes a table's row type from its table const in the identifier
+ * allocator, which keys everything by a single string.
+ */
+const ROW_TYPE_PREFIX = 'row\u0000';
+
+/**
+ * Identifiers the generated file always declares or imports. A schema key that
+ * wants one of these is treated as a collision so the generated code never
+ * shadows them.
+ */
+const RESERVED_IDENTIFIERS: ReadonlySet<string> = new Set([
+  'CustomType',
+  'ReadonlyJSONValue',
+  'Row',
+  'Schema',
+  'ZeroCustomType',
+  'builder',
+  'createBuilder',
+  'drizzleSchema',
+  'schema',
+  'zeroSchema',
+  'zql',
+]);
+
+const stableDisambiguator = (key: string) =>
+  createHash('sha256').update(key).digest('hex').slice(0, 8);
+
+/**
+ * Assigns a generated identifier to every key in one pass.
+ *
+ * A key whose preferred name is unique and unreserved keeps that name. When
+ * several keys want the same name -- `user` and `users` both want the row type
+ * `User`, say -- every one of them takes a suffix derived from its own key, so
+ * no key's identifier depends on where it sits relative to the others. That
+ * keeps a reordered schema byte-identical, and confines the effect of adding a
+ * colliding key to the keys it actually collides with.
+ */
+function allocateIdentifiers(
+  requests: Iterable<readonly [key: string, preferredName: string]>,
+): Map<string, string> {
+  const keysByPreferredName = new Map<string, string[]>();
+
+  for (const [key, preferredName] of requests) {
+    const existing = keysByPreferredName.get(preferredName);
+
+    if (existing) {
+      existing.push(key);
+    } else {
+      keysByPreferredName.set(preferredName, [key]);
+    }
+  }
+
+  const allocated = new Map<string, string>();
+
+  for (const [preferredName, keys] of keysByPreferredName) {
+    if (keys.length === 1 && !RESERVED_IDENTIFIERS.has(preferredName)) {
+      allocated.set(keys[0]!, preferredName);
+      continue;
+    }
+
+    for (const key of keys) {
+      allocated.set(key, `${preferredName}_${stableDisambiguator(key)}`);
+    }
+  }
+
+  return allocated;
+}
 
 export function getGeneratedSchema({
   tsProject,
@@ -208,10 +278,6 @@ export function getGeneratedSchema({
   const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
 
-  const usedIdentifiers = new Set<string>([schemaObjectName]);
-  const tableConstNames = new Map<string, string>();
-  const relationshipConstNames = new Map<string, string>();
-  const fallbackCustomTypeAliasNames = new Map<string, string>();
   let readonlyJSONValueImported = false;
 
   const sanitizeIdentifier = (value: string, fallback: string) => {
@@ -227,39 +293,67 @@ export function getGeneratedSchema({
       ? identifier
       : `${identifier}${suffix}`;
 
-  const getUniqueIdentifier = (identifier: string) => {
-    let candidate = identifier;
-    let counter = 2;
-    while (usedIdentifiers.has(candidate)) {
-      candidate = `${identifier}${counter}`;
-      counter += 1;
-    }
-    usedIdentifiers.add(candidate);
-    return candidate;
-  };
+  const constNameFor = (name: string, suffix: string, fallback: string) =>
+    ensureSuffix(sanitizeIdentifier(name, fallback), suffix);
 
-  const createConstName = (name: string, suffix: string, fallback: string) =>
-    getUniqueIdentifier(
-      ensureSuffix(sanitizeIdentifier(name, fallback), suffix),
-    );
+  const customTypeAliasNameFor = (tableName: string, columnName: string) =>
+    camelCase(`${tableName} ${columnName} custom type`, {pascalCase: true});
 
-  const createCustomTypeAliasName = (tableName: string, columnName: string) =>
-    getUniqueIdentifier(
-      camelCase(`${tableName} ${columnName} custom type`, {pascalCase: true}),
-    );
+  const tableNames = isRecord(result.zeroSchema?.tables)
+    ? Object.keys(result.zeroSchema.tables)
+    : [];
+  const relationshipNames = isRecord(result.zeroSchema?.relationships)
+    ? Object.keys(result.zeroSchema.relationships)
+    : [];
 
-  for (const request of customTypeRequests) {
-    const key = `${request.tableName}${COLUMN_SEPARATOR}${request.columnName}`;
+  const tableConstNames = allocateIdentifiers(
+    tableNames.map(
+      tableName =>
+        [tableName, constNameFor(tableName, 'Table', 'table')] as const,
+    ),
+  );
+  const relationshipConstNames = allocateIdentifiers(
+    relationshipNames.map(
+      relationshipName =>
+        [
+          relationshipName,
+          constNameFor(relationshipName, 'Relationships', 'relationships'),
+        ] as const,
+    ),
+  );
 
-    if (resolvedCustomTypes.has(key)) {
-      continue;
-    }
+  const fallbackCustomTypeRequests = customTypeRequests.filter(
+    request =>
+      !resolvedCustomTypes.has(
+        `${request.tableName}${COLUMN_SEPARATOR}${request.columnName}`,
+      ),
+  );
 
-    fallbackCustomTypeAliasNames.set(
-      key,
-      createCustomTypeAliasName(request.tableName, request.columnName),
-    );
-  }
+  // Row types and custom type aliases share the type namespace, so they are
+  // allocated together to keep either from silently shadowing the other.
+  const typeAliasNames = allocateIdentifiers([
+    ...fallbackCustomTypeRequests.map(
+      request =>
+        [
+          `${request.tableName}${COLUMN_SEPARATOR}${request.columnName}`,
+          customTypeAliasNameFor(request.tableName, request.columnName),
+        ] as const,
+    ),
+    ...tableNames.map(
+      tableName =>
+        [
+          `${ROW_TYPE_PREFIX}${tableName}`,
+          camelCase(pluralize.singular(tableName), {pascalCase: true}),
+        ] as const,
+    ),
+  ]);
+
+  const fallbackCustomTypeAliasNames = new Map(
+    fallbackCustomTypeRequests.map(request => {
+      const key = `${request.tableName}${COLUMN_SEPARATOR}${request.columnName}`;
+      return [key, typeAliasNames.get(key)!] as const;
+    }),
+  );
 
   const writeSchemaReferenceCollection = (
     writer: CodeBlockWriter,
@@ -458,8 +552,7 @@ export function getGeneratedSchema({
     for (const [tableName, tableDef] of Object.entries(
       result.zeroSchema.tables as Record<string, unknown>,
     )) {
-      const constName = createConstName(tableName, 'Table', 'table');
-      tableConstNames.set(tableName, constName);
+      const constName = tableConstNames.get(tableName)!;
 
       if (tableConstCount > 0) {
         zeroSchemaGenerated.addStatements(writer => writer.blankLine());
@@ -489,12 +582,7 @@ export function getGeneratedSchema({
     for (const [relationshipName, relationshipDef] of Object.entries(
       result.zeroSchema.relationships as Record<string, unknown>,
     )) {
-      const constName = createConstName(
-        relationshipName,
-        'Relationships',
-        'relationships',
-      );
-      relationshipConstNames.set(relationshipName, constName);
+      const constName = relationshipConstNames.get(relationshipName)!;
 
       if (relationshipConstCount === 0) {
         if (tableConstCount > 0) {
@@ -571,10 +659,7 @@ export function getGeneratedSchema({
     }
 
     for (const tableName of allTableNames) {
-      // make the type name singular and camelCase
-      const typeName = camelCase(pluralize.singular(tableName), {
-        pascalCase: true,
-      });
+      const typeName = typeAliasNames.get(`${ROW_TYPE_PREFIX}${tableName}`)!;
 
       const tableTypeAlias = zeroSchemaGenerated.addTypeAlias({
         name: typeName,
