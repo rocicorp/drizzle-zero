@@ -226,6 +226,26 @@ describe('getGeneratedSchema', () => {
     ).toThrow(/❌ drizzle-zero: Failed to find type definitions for/);
   });
 
+  it('resolves the config file by path, not by file name', () => {
+    // A same-named file one directory shallower, which is what ts-morph's
+    // file-name search returns first when matching on the bare file name.
+    const otherConfigPath = path.resolve(__dirname, './one-to-one.zero.ts');
+
+    tsProject.createSourceFile(
+      otherConfigPath,
+      'export const schema = {tables: {}, relationships: {}} as const;',
+      {overwrite: true},
+    );
+
+    const [, declaration] = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    expect(declaration.getSourceFile().getFilePath()).toBe(schemaPath);
+  });
+
   it('should handle schema with empty entries correctly', () => {
     const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
       tsProject,
