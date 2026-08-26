@@ -190,12 +190,7 @@ const createZeroTableBuilder = <
   const tableColumns = getTableColumns(table);
   const tableConfig = getTableConfigForDatabase(table);
 
-  const columnNameToStableKey = new Map<string, string>(
-    typedEntries(tableColumns).map(([key, column]) => [
-      column.name,
-      String(key),
-    ]),
-  );
+  const columnNameToStableKey = getColumnNameToKeyMap(table);
 
   const primaryKeys = new Set<string>();
   for (const [key, column] of typedEntries(tableColumns)) {
@@ -358,6 +353,28 @@ const createZeroTableBuilder = <
 };
 
 /**
+ * Maps each database column name back to the schema key that declares it.
+ *
+ * Drizzle discards the schema key when it builds relations, so it has to be
+ * recovered from the column name. A name is normally declared by exactly one
+ * key; when a schema declares it more than once the smallest key wins, so the
+ * answer does not depend on the order the columns were written in.
+ */
+const getColumnNameToKeyMap = (table: Table): ReadonlyMap<string, string> => {
+  const columnNameToKey = new Map<string, string>();
+
+  for (const [key, column] of typedEntries(getTableColumns(table))) {
+    const existing = columnNameToKey.get(column.name);
+
+    if (existing === undefined || String(key) < existing) {
+      columnNameToKey.set(column.name, String(key));
+    }
+  }
+
+  return columnNameToKey;
+};
+
+/**
  * Get the key of a column in the schema from the column name.
  * @param columnName - The name of the column to get the key for
  * @param table - The table to get the column key from
@@ -369,12 +386,16 @@ const getDrizzleColumnKeyFromColumnName = ({
 }: {
   columnName: string;
   table: Table;
-}) => {
-  const tableColumns = getTableColumns(table);
+}): string => {
+  const key = getColumnNameToKeyMap(table).get(columnName);
 
-  return typedEntries(tableColumns).find(
-    ([_name, column]) => column.name === columnName,
-  )?.[0]!;
+  if (key === undefined) {
+    throw new Error(
+      `drizzle-zero: Column ${getTableName(table)}.${columnName} is not declared on the table it belongs to. This usually means a relation references a column from a different table.`,
+    );
+  }
+
+  return key;
 };
 
 export {

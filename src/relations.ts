@@ -652,22 +652,38 @@ const getDrizzleKeyFromTable = ({
   table?: Table;
   fallbackTableName?: string;
 }) => {
+  // A table can be exported under more than one key. Take the smallest
+  // matching key rather than the first one, so the key a relation points at
+  // does not depend on the order the schema happens to export its tables in.
+  const smallestMatch = (
+    predicate: (candidate: Table) => boolean,
+  ): string | undefined => {
+    let match: string | undefined;
+
+    for (const [name, tableOrRelations] of typedEntries(schema)) {
+      if (!is(tableOrRelations, Table) || !predicate(tableOrRelations)) {
+        continue;
+      }
+
+      if (match === undefined || String(name) < match) {
+        match = String(name);
+      }
+    }
+
+    return match;
+  };
+
   if (table) {
-    const directMatch = typedEntries(schema).find(
-      ([_name, tableOrRelations]) =>
-        is(tableOrRelations, Table) && tableOrRelations === table,
-    )?.[0];
+    const directMatch = smallestMatch(candidate => candidate === table);
 
     if (directMatch) {
       return directMatch;
     }
 
     const uniqueName = getTableUniqueName(table);
-    const uniqueMatch = typedEntries(schema).find(
-      ([_name, tableOrRelations]) =>
-        is(tableOrRelations, Table) &&
-        getTableUniqueName(tableOrRelations) === uniqueName,
-    )?.[0];
+    const uniqueMatch = smallestMatch(
+      candidate => getTableUniqueName(candidate) === uniqueName,
+    );
 
     if (uniqueMatch) {
       return uniqueMatch;
@@ -675,11 +691,9 @@ const getDrizzleKeyFromTable = ({
   }
 
   if (fallbackTableName) {
-    const fallbackMatch = typedEntries(schema).find(
-      ([_name, tableOrRelations]) =>
-        is(tableOrRelations, Table) &&
-        getTableName(tableOrRelations) === fallbackTableName,
-    )?.[0];
+    const fallbackMatch = smallestMatch(
+      candidate => getTableName(candidate) === fallbackTableName,
+    );
 
     if (fallbackMatch) {
       return fallbackMatch;
