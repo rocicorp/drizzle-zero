@@ -2329,4 +2329,25 @@ describe('tables', () => {
       getDrizzleColumnKeyFromColumnName({columnName: 'nope', table: users}),
     ).toThrowError(/users\.nope is not declared/);
   });
+
+  test('pg - default-value warnings are reported on every build', () => {
+    const users = pgTable('users', {
+      id: text('id').primaryKey(),
+      createdAt: timestamp('created_at').defaultNow().notNull(),
+    });
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      createZeroTableBuilder('users', users);
+      const afterFirstBuild = warn.mock.calls.length;
+
+      createZeroTableBuilder('users', users);
+
+      expect(afterFirstBuild).toBeGreaterThan(0);
+      expect(warn.mock.calls.length).toBe(afterFirstBuild * 2);
+    } finally {
+      warn.mockRestore();
+    }
+  });
 });

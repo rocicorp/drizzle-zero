@@ -418,6 +418,7 @@ const drizzleZeroConfig = <
   }
 
   const tables: any[] = [];
+  const warnedServerDefaults = new Set<string>();
   const tableColumnNamesForSourceTable = new Map<string, Set<string>>();
   const includedTableKeys = new Set<string>();
   const discoveredRelations = new Map<
@@ -479,6 +480,7 @@ const drizzleZeroConfig = <
         config?.debug,
         config?.casing,
         config?.suppressDefaultsWarning,
+        warnedServerDefaults,
       );
 
       tables.push(tableSchema);

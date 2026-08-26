@@ -28,7 +28,6 @@ import type {
 } from './types';
 import {debugLog, typedEntries} from './util';
 
-const warnedServerDefaults = new Set<string>();
 const supportedZeroTypes = ['string', 'number', 'boolean', 'json'] as const;
 
 export type {ColumnBuilder, ReadonlyJSONValue, TableBuilderWithColumns};
@@ -185,6 +184,11 @@ const createZeroTableBuilder = <
    * Whether to hide warnings for columns with default values.
    */
   suppressDefaultsWarning?: boolean,
+  /**
+   * Collects the columns already warned about, so one schema build reports
+   * each column at most once. A fresh set is used when none is supplied.
+   */
+  warnedServerDefaults: Set<string> = new Set(),
 ): ZeroTableBuilder<TTableName, TTable, TColumnConfig> => {
   const actualTableName = getTableName(table);
   const tableColumns = getTableColumns(table);
