@@ -280,9 +280,12 @@ export function getGeneratedSchema({
 
   let readonlyJSONValueImported = false;
 
+  // `locale: false` throughout: camelcase otherwise case-maps with the host
+  // locale, which turns `I` into a dotless `ı` under `tr`. Generated
+  // identifiers must not depend on where the generator runs.
   const sanitizeIdentifier = (value: string, fallback: string) => {
     const baseCandidate =
-      camelCase(value, {pascalCase: false}) || value || fallback;
+      camelCase(value, {pascalCase: false, locale: false}) || value || fallback;
     const cleaned = baseCandidate.replace(/[^A-Za-z0-9_$]/g, '') || fallback;
     const startsValid = /^[A-Za-z_$]/.test(cleaned) ? cleaned : `_${cleaned}`;
     return startsValid.length > 0 ? startsValid : fallback;
@@ -297,7 +300,10 @@ export function getGeneratedSchema({
     ensureSuffix(sanitizeIdentifier(name, fallback), suffix);
 
   const customTypeAliasNameFor = (tableName: string, columnName: string) =>
-    camelCase(`${tableName} ${columnName} custom type`, {pascalCase: true});
+    camelCase(`${tableName} ${columnName} custom type`, {
+      pascalCase: true,
+      locale: false,
+    });
 
   const tableNames = isRecord(result.zeroSchema?.tables)
     ? Object.keys(result.zeroSchema.tables)
@@ -343,7 +349,10 @@ export function getGeneratedSchema({
       tableName =>
         [
           `${ROW_TYPE_PREFIX}${tableName}`,
-          camelCase(pluralize.singular(tableName), {pascalCase: true}),
+          camelCase(pluralize.singular(tableName), {
+            pascalCase: true,
+            locale: false,
+          }),
         ] as const,
     ),
   ]);
