@@ -304,6 +304,18 @@ export function getGeneratedSchema({
   ) => {
     const indentStr = ' '.repeat(indent);
 
+    // A column definition always sits at tables/<table>/columns/<column>, so a
+    // `customType` key anywhere else belongs to user data and must be written
+    // verbatim rather than replaced with a resolved type.
+    const columnPath =
+      keys.length === 4 &&
+      keys[0] === 'tables' &&
+      keys[2] === 'columns' &&
+      typeof keys[1] === 'string' &&
+      typeof keys[3] === 'string'
+        ? ([keys[1], keys[3]] as const)
+        : null;
+
     if (
       !value ||
       typeof value === 'string' ||
@@ -357,23 +369,16 @@ export function getGeneratedSchema({
               relationshipConstNames,
               indent + 2,
             );
-          } else if (key === 'customType' && propValue === null) {
-            const tableIndex = 1;
-            const columnIndex = 3;
-            const tableName = keys[tableIndex];
-            const columnName = keys[columnIndex];
-            const resolvedType =
-              typeof tableName === 'string' && typeof columnName === 'string'
-                ? resolvedCustomTypes.get(
-                    `${tableName}${COLUMN_SEPARATOR}${columnName}`,
-                  )
-                : undefined;
+          } else if (
+            columnPath !== null &&
+            key === 'customType' &&
+            propValue === null
+          ) {
+            const [tableName, columnName] = columnPath;
+            const customTypeKey = `${tableName}${COLUMN_SEPARATOR}${columnName}`;
+            const resolvedType = resolvedCustomTypes.get(customTypeKey);
             const fallbackAlias =
-              typeof tableName === 'string' && typeof columnName === 'string'
-                ? fallbackCustomTypeAliasNames.get(
-                    `${tableName}${COLUMN_SEPARATOR}${columnName}`,
-                  )
-                : undefined;
+              fallbackCustomTypeAliasNames.get(customTypeKey);
 
             if (resolvedType) {
               writer.write(`null as unknown as ${resolvedType}`);
@@ -385,12 +390,20 @@ export function getGeneratedSchema({
               writer.write(`null as unknown as ${fallbackAlias}`);
             } else {
               writer.write(
-                `null as unknown as ${customTypeHelper}<${zeroSchemaSpecifier}, "${keys[tableIndex]}", "${keys[columnIndex]}">`,
+                `null as unknown as ${customTypeHelper}<${zeroSchemaSpecifier}, ${JSON.stringify(tableName)}, ${JSON.stringify(columnName)}>`,
               );
             }
-          } else if (key === 'enableLegacyMutators') {
+          } else if (
+            mode === 'schema' &&
+            keys.length === 0 &&
+            key === 'enableLegacyMutators'
+          ) {
             writer.write(enableLegacyMutators ? 'true' : 'false');
-          } else if (key === 'enableLegacyQueries') {
+          } else if (
+            mode === 'schema' &&
+            keys.length === 0 &&
+            key === 'enableLegacyQueries'
+          ) {
             writer.write(enableLegacyQueries ? 'true' : 'false');
           } else {
             writeValue(writer, propValue, {

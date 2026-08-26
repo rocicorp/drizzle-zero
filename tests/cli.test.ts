@@ -1407,6 +1407,97 @@ describe('getGeneratedSchema', () => {
     expect(generatedSchema).not.toContain('"enableLegacyMutators": false');
   });
 
+  it('does not rewrite columns whose names collide with schema-level keys', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            users: {
+              name: 'users',
+              primaryKey: ['id'],
+              columns: {
+                id: {type: 'number', optional: false, customType: null},
+                enableLegacyMutators: {
+                  type: 'boolean',
+                  optional: false,
+                  customType: null,
+                },
+                enableLegacyQueries: {
+                  type: 'boolean',
+                  optional: false,
+                  customType: null,
+                },
+              },
+            },
+          },
+          relationships: {},
+          enableLegacyMutators: true,
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+      enableLegacyMutators: true,
+    });
+
+    // The schema-level flag is still rewritten...
+    expect(generatedSchema).toContain('"enableLegacyMutators": true');
+    // ...but the identically named columns keep their definitions.
+    expect(generatedSchema).toContain('"enableLegacyMutators": {');
+    expect(generatedSchema).toContain('"enableLegacyQueries": {');
+  });
+
+  it('only substitutes customType for real column definitions', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            users: {
+              name: 'users',
+              primaryKey: ['id'],
+              columns: {
+                id: {type: 'number', optional: false, customType: null},
+              },
+            },
+          },
+          relationships: {
+            users: {
+              // A relationship payload that happens to carry a `customType`
+              // key at the same depth a column definition would.
+              posts: [{sourceField: ['id'], customType: null}],
+            },
+          },
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+    });
+
+    const relationshipConst = generatedSchema.slice(
+      generatedSchema.indexOf('const usersRelationships'),
+    );
+
+    expect(relationshipConst).toContain('"customType": null');
+    expect(relationshipConst).not.toContain('null as unknown as');
+  });
+
   it('should set enableLegacyQueries to true', () => {
     const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
       tsProject,
