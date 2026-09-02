@@ -906,7 +906,9 @@ CREATE TABLE "user" (
 	"country_iso" char(2) NOT NULL,
 	"region_code" char(2),
 	"preferred_currency" char(3) NOT NULL,
-	"status" text
+	"status" text,
+	CONSTRAINT "user_email_unique" UNIQUE("email"),
+	CONSTRAINT "user_name_partner_unique" UNIQUE("name","partner")
 );
 --> statement-breakpoint
 CREATE TABLE "webhook_subscription" (

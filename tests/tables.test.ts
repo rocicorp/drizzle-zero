@@ -19,6 +19,7 @@ import {
   doublePrecision,
   geometry,
   inet,
+  index,
   integer,
   interval,
   jsonb,
@@ -40,6 +41,8 @@ import {
   text,
   time,
   timestamp,
+  unique,
+  uniqueIndex,
   uuid,
   varchar,
   type Precision,
@@ -569,6 +572,123 @@ describe('tables', () => {
       result.schema.columns.enabled.customType,
       expected.schema.columns.enabled.customType,
     );
+  });
+
+  test('pg - unique keys', () => {
+    const testTable = pgTable(
+      'unique_test',
+      {
+        id: text().primaryKey(),
+        email: text('email_address').notNull().unique(),
+        nullableCode: text('nullable_code').unique(),
+        accountSlug: text().notNull().unique(),
+        alpha: text().notNull(),
+        zeta: text().notNull(),
+        tenantId: text('tenant_id').notNull(),
+      },
+      t => [
+        unique().on(t.zeta, t.alpha),
+        unique().on(t.id, t.tenantId),
+        uniqueIndex().on(t.tenantId, t.email),
+      ],
+    );
+
+    const result = createZeroTableBuilder(
+      'unique_test',
+      testTable,
+      true,
+      false,
+      'snake_case',
+    );
+
+    const expected = table('unique_test')
+      .columns({
+        id: string(),
+        email: string().from('email_address'),
+        nullableCode: string().from('nullable_code').optional(),
+        accountSlug: string().from('account_slug'),
+        alpha: string(),
+        zeta: string(),
+        tenantId: string().from('tenant_id'),
+      })
+      .primaryKey('id')
+      .unique('email')
+      .unique('nullableCode')
+      .unique('accountSlug')
+      .unique('zeta', 'alpha')
+      .unique('id', 'tenantId')
+      .unique('tenantId', 'email');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+  });
+
+  test('pg - filters invalid and duplicate unique key metadata', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const testTable = pgTable(
+      'unique_filtering',
+      {
+        tenantId: text('tenant_id').notNull(),
+        id: text().notNull(),
+        email: text().notNull().unique(),
+        remapped: text().notNull().unique(),
+        omitted: text().notNull(),
+        unsupported: interval().notNull().unique(),
+      },
+      t => {
+        const uniqueWithInclude = uniqueIndex().on(t.tenantId);
+        (
+          uniqueWithInclude as unknown as {
+            config: {include: unknown[]};
+          }
+        ).config.include = [t.omitted];
+
+        return [
+          primaryKey({columns: [t.tenantId, t.id]}),
+          unique().on(t.tenantId, t.id),
+          unique().on(t.email),
+          unique().on(t.omitted, t.email),
+          unique().on(t.tenantId, t.email),
+          index().on(t.email),
+          uniqueIndex()
+            .on(t.email)
+            .where(sql`${t.email} is not null`),
+          uniqueIndex().on(sql`lower(${t.email})`),
+          uniqueIndex().on(t.email),
+          uniqueWithInclude,
+        ];
+      },
+    );
+
+    const result = createZeroTableBuilder('unique_filtering', testTable, {
+      tenantId: true,
+      id: true,
+      email: true,
+      remapped: string().from('different_column'),
+      omitted: false,
+      unsupported: true,
+    });
+
+    const expected = table('unique_filtering')
+      .columns({
+        tenantId: string().from('tenant_id'),
+        id: string(),
+        email: string(),
+        remapped: string().from('different_column'),
+      })
+      .primaryKey('tenantId', 'id')
+      .unique('email')
+      .unique('tenantId', 'email')
+      .unique('tenantId');
+
+    expectTableSchemaDeepEqual(result.build()).toEqual(expected.build());
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Unsupported column type: unsupported - PgInterval (string)',
+      ),
+    );
+
+    consoleSpy.mockRestore();
   });
 
   test('pg - timestamp fields', () => {

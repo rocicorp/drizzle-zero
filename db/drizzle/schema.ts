@@ -29,6 +29,7 @@ import {
   text,
   time,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -84,33 +85,37 @@ const sharedColumns = {
     .$onUpdate(() => sql`now()`),
 } as const;
 
-export const user = pgTable('user', {
-  ...sharedColumns,
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  partner: boolean('partner').notNull(),
-  email: text('email').$type<`${string}@${string}`>().notNull(),
-  customTypeJson: jsonb('custom_type_json').$type<CustomJsonType>().notNull(),
-  customInterfaceJson: jsonb('custom_interface_json')
-    .$type<CustomJsonInterface>()
-    .notNull(),
-  testInterface: jsonb('test_interface').$type<TestInterface>().notNull(),
-  testType: jsonb('test_type').$type<TestType>().notNull(),
-  testExportedType: jsonb('test_exported_type')
-    .$type<TestExportedType>()
-    .notNull(),
-  notificationPreferences: jsonb('notification_preferences')
-    .$type<NotificationPreferences>()
-    .notNull(),
-  countryIso: char('country_iso', {length: 2})
-    .$type<CountryIsoCode>()
-    .notNull(),
-  regionCode: char('region_code', {length: 2}).$type<USState | null>(),
-  preferredCurrency: char('preferred_currency', {length: 3})
-    .$type<CurrencyCode>()
-    .notNull(),
-  status: text('status', {enum: ['ASSIGNED', 'COMPLETED']}),
-});
+export const user = pgTable(
+  'user',
+  {
+    ...sharedColumns,
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    partner: boolean('partner').notNull(),
+    email: text('email').$type<`${string}@${string}`>().notNull().unique(),
+    customTypeJson: jsonb('custom_type_json').$type<CustomJsonType>().notNull(),
+    customInterfaceJson: jsonb('custom_interface_json')
+      .$type<CustomJsonInterface>()
+      .notNull(),
+    testInterface: jsonb('test_interface').$type<TestInterface>().notNull(),
+    testType: jsonb('test_type').$type<TestType>().notNull(),
+    testExportedType: jsonb('test_exported_type')
+      .$type<TestExportedType>()
+      .notNull(),
+    notificationPreferences: jsonb('notification_preferences')
+      .$type<NotificationPreferences>()
+      .notNull(),
+    countryIso: char('country_iso', {length: 2})
+      .$type<CountryIsoCode>()
+      .notNull(),
+    regionCode: char('region_code', {length: 2}).$type<USState | null>(),
+    preferredCurrency: char('preferred_currency', {length: 3})
+      .$type<CurrencyCode>()
+      .notNull(),
+    status: text('status', {enum: ['ASSIGNED', 'COMPLETED']}),
+  },
+  t => [unique().on(t.name, t.partner)],
+);
 
 export const userRelations = relations(user, ({many}) => ({
   messages: many(message),
