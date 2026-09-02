@@ -1,5 +1,5 @@
 {
-  "id": "41f62e64-353f-4998-b383-a3086269b4b2",
+  "id": "36241236-01a1-4b6c-ad25-4cb3bb76ab12",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -6292,7 +6292,18 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": ["email"]
+        },
+        "user_name_partner_unique": {
+          "name": "user_name_partner_unique",
+          "nullsNotDistinct": false,
+          "columns": ["name", "partner"]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

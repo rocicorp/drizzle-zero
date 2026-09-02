@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest';
 import {drizzleZeroConfig} from '../src/relations';
-import {pgTable, serial, text, primaryKey} from 'drizzle-orm/pg-core';
+import {pgTable, serial, text, primaryKey, unique} from 'drizzle-orm/pg-core';
 import type {Schema} from '@rocicorp/zero';
 import {assertEqual} from './utils';
 
@@ -8,7 +8,7 @@ describe('drizzleZeroConfig with explicit table and column configuration', () =>
   const users = pgTable('users', {
     id: serial('id').primaryKey(),
     name: text('name').notNull(),
-    email: text('email').notNull(),
+    email: text('email').notNull().unique(),
     phone: text('phone'),
   });
 
@@ -32,9 +32,10 @@ describe('drizzleZeroConfig with explicit table and column configuration', () =>
       postId: serial('post_id').references(() => posts.id),
       role: text('role', {enum: ['owner', 'editor']}),
     },
-    (t: any) => ({
-      pk: primaryKey({columns: [t.userId, t.postId]}),
-    }),
+    t => [
+      primaryKey({columns: [t.userId, t.postId]}),
+      unique().on(t.userId, t.role),
+    ],
   );
 
   const drizzleSchema = {users, posts, comments, usersToPosts};
@@ -61,6 +62,10 @@ describe('drizzleZeroConfig with explicit table and column configuration', () =>
     expect(
       new Set(Object.keys(schema.tables.usersToPosts.columns)),
     ).toStrictEqual(new Set(['userId', 'postId', 'role']));
+    expect(schema.tables.users.uniqueKeys).toStrictEqual([['email']]);
+    expect(schema.tables.usersToPosts.uniqueKeys).toStrictEqual([
+      ['userId', 'role'],
+    ]);
   });
 
   test('should handle explicit table and column configurations', () => {
@@ -100,5 +105,7 @@ describe('drizzleZeroConfig with explicit table and column configuration', () =>
     expect(
       new Set(Object.keys(schema.tables.usersToPosts.columns)),
     ).toStrictEqual(new Set(['userId', 'postId']));
+    expect(schema.tables.users.uniqueKeys).toStrictEqual([['email']]);
+    expect(schema.tables.usersToPosts.uniqueKeys).toBeUndefined();
   });
 });
