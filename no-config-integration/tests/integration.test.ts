@@ -183,6 +183,12 @@ describe('relationships', () => {
 
     const query = queries.messageById('99');
 
+    await expect
+      .poll(async () => (await zero.run(query, {type: 'complete'}))?.id, {
+        timeout: 10_000,
+      })
+      .toBe('99');
+
     const message = await zero.run(query, {type: 'complete'});
 
     expectTypeOf(message).toExtend<Message | undefined>();
@@ -352,6 +358,12 @@ describe('types', () => {
     });
 
     const query = queries.allTypesById('1011');
+
+    await expect
+      .poll(async () => (await zero.run(query, {type: 'complete'}))?.id, {
+        timeout: 10_000,
+      })
+      .toBe('1011');
 
     const result = await zero.run(query, {type: 'complete'});
 

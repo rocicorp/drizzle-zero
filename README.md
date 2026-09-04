@@ -30,7 +30,7 @@ export const users = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name'),
   // custom types are supported for any column type!
-  email: text('email').$type<`${string}@${string}`>().notNull(),
+  email: text('email').$type<`${string}@${string}`>().notNull().unique(),
 });
 
 export const usersRelations = relations(users, ({many}) => ({
@@ -159,6 +159,34 @@ You can customize this config file path with `-c, --config <input-file>`.
 **Important:** the `drizzle-zero.config.ts` file **must be included in the tsconfig**
 for the type resolution to work. If they are not included, there will be an error similar to
 `Failed to find type definitions`.
+
+### Unique keys
+
+Generated schemas mirror unique keys already declared in Drizzle. Field-level
+`.unique()`, table-level `unique().on(...)`, and eligible non-partial unique
+indexes over columns are emitted as Zero `uniqueKeys` metadata:
+
+```ts
+import {pgTable, text, unique, uniqueIndex} from 'drizzle-orm/pg-core';
+
+export const accounts = pgTable(
+  'account',
+  {
+    id: text('id').primaryKey(),
+    handle: text('handle').unique(),
+    organizationId: text('organization_id').notNull(),
+    externalId: text('external_id').notNull(),
+    inviteCode: text('invite_code'),
+  },
+  account => [
+    unique().on(account.organizationId, account.externalId),
+    uniqueIndex().on(account.inviteCode),
+  ],
+);
+```
+
+This metadata lets Zero 1.10+ prove that queries constrained by a complete
+unique key return at most one row, including for `{scalar: true}` subqueries.
 
 ## Many-to-Many Relationships
 
