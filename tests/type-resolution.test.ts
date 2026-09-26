@@ -7,6 +7,123 @@ import {
 } from '../src/cli/type-resolution';
 
 describe('resolveCustomTypes', () => {
+  test.each([
+    ['"WY" | "AL" | "AK"', '10 | 2'],
+    ['"AK" | "WY" | "AL"', '2 | 10'],
+  ])(
+    'uses native type ordering after checking %s and %s',
+    (states, numbers) => {
+      const project = new Project({
+        tsConfigFilePath: path.resolve(__dirname, '../tsconfig.json'),
+        skipAddingFilesFromTsConfig: true,
+      });
+      const unrelated = project.createSourceFile(
+        'unrelated.ts',
+        `export type States = ${states}; export type Numbers = ${numbers};`,
+      );
+      project.createSourceFile(
+        'virtual-schema.ts',
+        `
+        import {pgTable, text, integer, jsonb} from 'drizzle-orm/pg-core';
+        export const records = pgTable('records', {
+          id: text('id').primaryKey(),
+          state: text('state').$type<'WY' | 'AL' | 'AK'>().notNull(),
+          count: integer('count').$type<10 | 2>().notNull(),
+          tuple: jsonb('tuple').$type<[string, number, 'WY' | 'AL' | 'AK']>().notNull(),
+        });
+      `,
+      );
+      // Intern the unrelated literals before resolving the schema, as in PR #1.
+      for (const alias of unrelated.getTypeAliases()) {
+        alias.getType().getText();
+      }
+
+      const resolved = resolveCustomTypes({
+        project,
+        helperName: 'CustomType',
+        schemaTypeExpression: 'typeof drizzleSchema',
+        schemaImports: [
+          {
+            moduleSpecifier: './virtual-schema',
+            namespaceImport: 'drizzleSchema',
+            isTypeOnly: true,
+          },
+        ],
+        requests: ['state', 'count', 'tuple'].map(columnName => ({
+          tableName: 'records',
+          columnName,
+        })),
+      });
+
+      expect(Object.fromEntries(resolved)).toEqual({
+        'records::|::state': '"AK" | "AL" | "WY"',
+        'records::|::count': '2 | 10',
+        'records::|::tuple': '[string, number, "AK" | "AL" | "WY"]',
+      });
+    },
+  );
+
+  // PR #1 reported custom types collapsing to unknown when ts-morph's
+  // declarations were loaded into the schema's TypeScript program.
+  test.each(['CustomType', 'ZeroCustomType'] as const)(
+    '%s resolves custom types with ts-morph declarations in the program',
+    helperName => {
+      const project = new Project({
+        tsConfigFilePath: path.resolve(__dirname, '../tsconfig.json'),
+        skipAddingFilesFromTsConfig: true,
+      });
+
+      const source = project.createSourceFile(
+        'virtual-schema.ts',
+        `
+          import type {Project} from 'ts-morph';
+          import {pgTable, text, integer, jsonb} from 'drizzle-orm/pg-core';
+          import {drizzleZeroConfig} from './src/index';
+
+          export type SchemaProject = Project;
+          export const records = pgTable('records', {
+            id: text('id').primaryKey(),
+            status: text('status').$type<'active' | 'archived'>().notNull(),
+            count: integer('count').notNull(),
+            metadata: jsonb('metadata').notNull(),
+            settings: jsonb('settings').$type<{enabled: boolean; labels: string[]}>().notNull(),
+          });
+          export const schema = drizzleZeroConfig({records}, {tables: {records: true}});
+        `,
+        {overwrite: true},
+      );
+      project.resolveSourceFileDependencies();
+      expect(source.getPreEmitDiagnostics()).toEqual([]);
+
+      const resolved = resolveCustomTypes({
+        project,
+        helperName,
+        schemaTypeExpression:
+          helperName === 'CustomType'
+            ? 'typeof drizzleSchema'
+            : 'typeof drizzleSchema.schema',
+        schemaImports: [
+          {
+            moduleSpecifier: './virtual-schema',
+            namespaceImport: 'drizzleSchema',
+            isTypeOnly: true,
+          },
+        ],
+        requests: ['id', 'status', 'count', 'metadata', 'settings'].map(
+          columnName => ({tableName: 'records', columnName}),
+        ),
+      });
+
+      expect(Object.fromEntries(resolved)).toEqual({
+        'records::|::id': 'string',
+        'records::|::status': '"active" | "archived"',
+        'records::|::count': 'number',
+        'records::|::metadata': 'ReadonlyJSONValue',
+        'records::|::settings': '{ enabled: boolean; labels: string[]; }',
+      });
+    },
+  );
+
   test('resolves primitive column types', () => {
     const project = new Project({
       tsConfigFilePath: path.resolve(__dirname, '../tsconfig.json'),

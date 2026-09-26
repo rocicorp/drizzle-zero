@@ -46,6 +46,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import {describe, expect, test, vi} from 'vitest';
 import {createZeroTableBuilder, type ColumnsConfig} from '../src';
+import {getDrizzleColumnKeyFromColumnName} from '../src/tables';
 import {assertEqual, expectTableSchemaDeepEqual} from './utils';
 
 describe('tables', () => {
@@ -2298,5 +2299,55 @@ describe('tables', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `[Error: drizzle-zero: Unsupported table type: test. Only Postgres tables are supported.]`,
     );
+  });
+
+  test('pg - column key lookup does not depend on declaration order', () => {
+    // Two schema keys declaring the same database column name is ambiguous;
+    // whichever order they are written in must resolve the same way.
+    const forwards = pgTable('t', {
+      id: text('id').primaryKey(),
+      alpha: text('dupe'),
+      beta: text('dupe'),
+    });
+    const backwards = pgTable('t', {
+      id: text('id').primaryKey(),
+      beta: text('dupe'),
+      alpha: text('dupe'),
+    });
+
+    expect(
+      getDrizzleColumnKeyFromColumnName({columnName: 'dupe', table: forwards}),
+    ).toBe(
+      getDrizzleColumnKeyFromColumnName({columnName: 'dupe', table: backwards}),
+    );
+  });
+
+  test('pg - column key lookup reports an unknown column', () => {
+    const users = pgTable('users', {id: text('id').primaryKey()});
+
+    expect(() =>
+      getDrizzleColumnKeyFromColumnName({columnName: 'nope', table: users}),
+    ).toThrowError(/users\.nope is not declared/);
+  });
+
+  test('pg - default-value warnings are reported on every build', () => {
+    const users = pgTable('users', {
+      id: text('id').primaryKey(),
+      createdAt: timestamp('created_at').defaultNow().notNull(),
+    });
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      createZeroTableBuilder('users', users);
+      const afterFirstBuild = warn.mock.calls.length;
+
+      createZeroTableBuilder('users', users);
+
+      expect(afterFirstBuild).toBeGreaterThan(0);
+      expect(warn.mock.calls.length).toBe(afterFirstBuild * 2);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

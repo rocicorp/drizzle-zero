@@ -1,4 +1,5 @@
 import {createSchema} from '@rocicorp/zero';
+import {canonicalizeZeroSchema} from './canonicalize';
 import {Table, getTableName, getTableUniqueName, is} from 'drizzle-orm';
 import {Relations as LegacyRelations} from 'drizzle-orm/_relations';
 import {getColumnTable} from 'drizzle-orm/column';
@@ -418,6 +419,7 @@ const drizzleZeroConfig = <
   }
 
   const tables: any[] = [];
+  const warnedServerDefaults = new Set<string>();
   const tableColumnNamesForSourceTable = new Map<string, Set<string>>();
   const includedTableKeys = new Set<string>();
   const discoveredRelations = new Map<
@@ -479,6 +481,7 @@ const drizzleZeroConfig = <
         config?.debug,
         config?.casing,
         config?.suppressDefaultsWarning,
+        warnedServerDefaults,
       );
 
       tables.push(tableSchema);
@@ -620,13 +623,15 @@ const drizzleZeroConfig = <
     }
   }
 
-  const finalSchema = createSchema({
-    tables,
-    relationships: Object.entries(relationships).map(([name, value]) => ({
-      name,
-      relationships: value,
-    })),
-  } as any) as unknown as DrizzleToZeroSchema<TDrizzleSchema, TColumnConfig>;
+  const finalSchema = canonicalizeZeroSchema(
+    createSchema({
+      tables,
+      relationships: Object.entries(relationships).map(([name, value]) => ({
+        name,
+        relationships: value,
+      })),
+    } as any),
+  ) as unknown as DrizzleToZeroSchema<TDrizzleSchema, TColumnConfig>;
 
   debugLog(
     config?.debug,
@@ -652,22 +657,38 @@ const getDrizzleKeyFromTable = ({
   table?: Table;
   fallbackTableName?: string;
 }) => {
+  // A table can be exported under more than one key. Take the smallest
+  // matching key rather than the first one, so the key a relation points at
+  // does not depend on the order the schema happens to export its tables in.
+  const smallestMatch = (
+    predicate: (candidate: Table) => boolean,
+  ): string | undefined => {
+    let match: string | undefined;
+
+    for (const [name, tableOrRelations] of typedEntries(schema)) {
+      if (!is(tableOrRelations, Table) || !predicate(tableOrRelations)) {
+        continue;
+      }
+
+      if (match === undefined || String(name) < match) {
+        match = String(name);
+      }
+    }
+
+    return match;
+  };
+
   if (table) {
-    const directMatch = typedEntries(schema).find(
-      ([_name, tableOrRelations]) =>
-        is(tableOrRelations, Table) && tableOrRelations === table,
-    )?.[0];
+    const directMatch = smallestMatch(candidate => candidate === table);
 
     if (directMatch) {
       return directMatch;
     }
 
     const uniqueName = getTableUniqueName(table);
-    const uniqueMatch = typedEntries(schema).find(
-      ([_name, tableOrRelations]) =>
-        is(tableOrRelations, Table) &&
-        getTableUniqueName(tableOrRelations) === uniqueName,
-    )?.[0];
+    const uniqueMatch = smallestMatch(
+      candidate => getTableUniqueName(candidate) === uniqueName,
+    );
 
     if (uniqueMatch) {
       return uniqueMatch;
@@ -675,11 +696,9 @@ const getDrizzleKeyFromTable = ({
   }
 
   if (fallbackTableName) {
-    const fallbackMatch = typedEntries(schema).find(
-      ([_name, tableOrRelations]) =>
-        is(tableOrRelations, Table) &&
-        getTableName(tableOrRelations) === fallbackTableName,
-    )?.[0];
+    const fallbackMatch = smallestMatch(
+      candidate => getTableName(candidate) === fallbackTableName,
+    );
 
     if (fallbackMatch) {
       return fallbackMatch;
