@@ -31,7 +31,7 @@ importers:
         version: 27.0.2
       tsx:
         specifier: ^4.23.0
-        version: 4.23.0
+        version: 4.23.1
     devDependencies:
       '@rocicorp/prettier-config':
         specifier: ^0.4.0
@@ -56,7 +56,7 @@ importers:
         version: 8.18.1
       '@vitest/browser':
         specifier: ^4.1.10
-        version: 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))(vitest@4.1.10)
+        version: 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))(vitest@4.1.10)
       '@vitest/coverage-v8':
         specifier: 4.1.3
         version: 4.1.3(@vitest/browser@4.1.10)(vitest@4.1.10)
@@ -80,16 +80,16 @@ importers:
         version: 3.9.5
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(postcss@8.5.17)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.8.3)
+        version: 8.5.1(postcss@8.5.19)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.8.3)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(typescript@6.0.3)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+        version: 6.1.1(typescript@6.0.3)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
       ws:
         specifier: ^8.21.0
         version: 8.21.0
@@ -116,7 +116,7 @@ importers:
         version: 8.20.0
       '@vitest/browser':
         specifier: ^4.1.10
-        version: 4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3))(vitest@4.1.10)
+        version: 4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3))(vitest@4.1.10)
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
@@ -3485,8 +3485,8 @@ packages:
       yaml:
         optional: true
 
-  postcss@8.5.17:
-    resolution: {integrity: sha512-J7EF+8X+CzRPaJPOv9Ck2wNWJvGnnl3PcNPAdGg6GTLjyVpyQ0yATMSXRFRV01BviT/9Gwuc3rjEyJbDJG9a4w==}
+  postcss@8.5.19:
+    resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -3877,8 +3877,8 @@ packages:
       typescript:
         optional: true
 
-  tsx@4.23.0:
-    resolution: {integrity: sha512-eUdUIaCr963q2h5u3+QwvYp0+eqPvn+egeqZUm0hwERCqqx1E3kK5ehbGCvqSE5MQAULr67ww0cA3jKc3YkM1w==}
+  tsx@4.23.1:
+    resolution: {integrity: sha512-GQHnkIfxyx1wYCOS/wonik5MVRZU9hi1TEZmzGZSCJB1y9YgoZ8H6itNE/u4suE+yLmOzuE4E5S4TZ/ZX2wcWQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -5858,16 +5858,16 @@ snapshots:
     dependencies:
       '@types/node': 25.9.5
 
-  '@vitest/browser@4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))(vitest@4.1.10)':
+  '@vitest/browser@4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))(vitest@4.1.10)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
       '@vitest/utils': 4.1.10
       magic-string: 0.30.21
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
@@ -5875,16 +5875,16 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/browser@4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3))(vitest@4.1.10)':
+  '@vitest/browser@4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3))(vitest@4.1.10)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3))
       '@vitest/utils': 4.1.10
       magic-string: 0.30.21
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-v8@4.1.3(@vitest/browser@4.1.10)(vitest@4.1.10))(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-v8@4.1.3(@vitest/browser@4.1.10)(vitest@4.1.10))(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3))
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
@@ -5904,9 +5904,9 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
     optionalDependencies:
-      '@vitest/browser': 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))(vitest@4.1.10)
+      '@vitest/browser': 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))(vitest@4.1.10)
 
   '@vitest/expect@4.1.10':
     dependencies:
@@ -5917,21 +5917,21 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3)
+      vite: 7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3)
 
-  '@vitest/mocker@4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3)
+      vite: 7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3)
 
   '@vitest/pretty-format@4.1.10':
     dependencies:
@@ -5964,7 +5964,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
 
   '@vitest/utils@4.1.10':
     dependencies:
@@ -6336,7 +6336,7 @@ snapshots:
       '@drizzle-team/brocli': 0.10.2
       '@esbuild-kit/esm-loader': 2.6.5
       esbuild: 0.25.12
-      tsx: 4.23.0
+      tsx: 4.23.1
 
   drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.22.0)(postgres@3.4.9):
     optionalDependencies:
@@ -7146,15 +7146,15 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-load-config@6.0.1(postcss@8.5.17)(tsx@4.23.0)(yaml@2.8.3):
+  postcss-load-config@6.0.1(postcss@8.5.19)(tsx@4.23.1)(yaml@2.8.3):
     dependencies:
       lilconfig: 3.1.3
     optionalDependencies:
-      postcss: 8.5.17
-      tsx: 4.23.0
+      postcss: 8.5.19
+      tsx: 4.23.1
       yaml: 2.8.3
 
-  postcss@8.5.17:
+  postcss@8.5.19:
     dependencies:
       nanoid: 3.3.16
       picocolors: 1.1.1
@@ -7616,7 +7616,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  tsup@8.5.1(postcss@8.5.17)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.8.3):
+  tsup@8.5.1(postcss@8.5.19)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.8.3):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.27.0)
       cac: 6.7.14
@@ -7627,7 +7627,7 @@ snapshots:
       fix-dts-default-cjs-exports: 1.0.1
       joycon: 3.1.1
       picocolors: 1.1.1
-      postcss-load-config: 6.0.1(postcss@8.5.17)(tsx@4.23.0)(yaml@2.8.3)
+      postcss-load-config: 6.0.1(postcss@8.5.19)(tsx@4.23.1)(yaml@2.8.3)
       resolve-from: 5.0.0
       rollup: 4.53.2
       source-map: 0.7.6
@@ -7636,7 +7636,7 @@ snapshots:
       tinyglobby: 0.2.15
       tree-kill: 1.2.2
     optionalDependencies:
-      postcss: 8.5.17
+      postcss: 8.5.19
       typescript: 6.0.3
     transitivePeerDependencies:
       - jiti
@@ -7644,7 +7644,7 @@ snapshots:
       - tsx
       - yaml
 
-  tsx@4.23.0:
+  tsx@4.23.1:
     dependencies:
       esbuild: 0.28.1
     optionalDependencies:
@@ -7684,48 +7684,48 @@ snapshots:
 
   uuid@8.3.2: {}
 
-  vite-tsconfig-paths@6.1.1(typescript@6.0.3)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3)):
+  vite-tsconfig-paths@6.1.1(typescript@6.0.3)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3)):
     dependencies:
       debug: 4.4.3
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@6.0.3)
-      vite: 7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3)
+      vite: 7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3):
+  vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
-      postcss: 8.5.17
+      postcss: 8.5.19
       rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 25.9.5
       fsevents: 2.3.3
-      tsx: 4.23.0
+      tsx: 4.23.1
       yaml: 2.8.3
 
-  vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3):
+  vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
-      postcss: 8.5.17
+      postcss: 8.5.19
       rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 26.1.1
       fsevents: 2.3.3
-      tsx: 4.23.0
+      tsx: 4.23.1
       yaml: 2.8.3
 
-  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3)):
+  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.3)(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -7742,7 +7742,7 @@ snapshots:
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 7.3.1(@types/node@25.9.5)(tsx@4.23.0)(yaml@2.8.3)
+      vite: 7.3.1(@types/node@25.9.5)(tsx@4.23.1)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
@@ -7752,10 +7752,10 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-v8@4.1.3(@vitest/browser@4.1.10)(vitest@4.1.10))(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3)):
+  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-v8@4.1.3(@vitest/browser@4.1.10)(vitest@4.1.10))(@vitest/ui@4.1.10)(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.10(vite@7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -7772,7 +7772,7 @@ snapshots:
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 7.3.1(@types/node@26.1.1)(tsx@4.23.0)(yaml@2.8.3)
+      vite: 7.3.1(@types/node@26.1.1)(tsx@4.23.1)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
