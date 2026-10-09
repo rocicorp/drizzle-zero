@@ -32,6 +32,13 @@ export function expectTableSchemaDeepEqual(actual: TableSchema) {
         primaryKey: expected.primaryKey,
       });
       expect({
+        __testKey: 'uniqueKeys',
+        uniqueKeys: actual.uniqueKeys,
+      }).toStrictEqual({
+        __testKey: 'uniqueKeys',
+        uniqueKeys: expected.uniqueKeys,
+      });
+      expect({
         __testKey: 'tableName',
         tableName: actual.name,
       }).toStrictEqual({

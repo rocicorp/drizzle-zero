@@ -51,6 +51,7 @@ describe('getGeneratedSchema', () => {
             users: {
               name: 'users',
               primaryKey: ['id'],
+              uniqueKeys: [['email'], ['lastName', 'firstName']],
               columns: {
                 id: {
                   type: 'number',
@@ -58,6 +59,21 @@ describe('getGeneratedSchema', () => {
                   customType: undefined,
                 },
                 name: {
+                  type: 'string',
+                  optional: false,
+                  customType: undefined,
+                },
+                email: {
+                  type: 'string',
+                  optional: false,
+                  customType: undefined,
+                },
+                lastName: {
+                  type: 'string',
+                  optional: false,
+                  customType: undefined,
+                },
+                firstName: {
                   type: 'string',
                   optional: false,
                   customType: undefined,
@@ -82,6 +98,9 @@ describe('getGeneratedSchema', () => {
     // Check for fields from the one-to-one schema
     expect(generatedSchema).toContain('"id": {');
     expect(generatedSchema).toContain('"name": {');
+    expect(generatedSchema).toContain(
+      '"uniqueKeys": [["email"], ["lastName", "firstName"]]',
+    );
 
     // Verify the auto-generated comment header
     expect(generatedSchema).toContain(

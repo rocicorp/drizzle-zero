@@ -31,7 +31,7 @@ const main = async () => {
     banner: {
       js: `#!/usr/bin/env node`,
     },
-    target: 'node16',
+    target: 'node22',
     platform: 'node',
     external: [
       'esbuild',

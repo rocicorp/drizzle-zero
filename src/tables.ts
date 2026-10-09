@@ -191,6 +191,7 @@ export type ZeroTableBuilderSchema<
   primaryKey: FindPrimaryKeyFromTable<TTable> extends [never]
     ? readonly [string, ...string[]]
     : readonly [string, ...string[]] & FindPrimaryKeyFromTable<TTable>;
+  uniqueKeys?: readonly (readonly [string, ...string[]])[];
   columns: Flatten<ZeroColumns<TTable, TColumnConfig>>;
 }>; // Zero does not support this properly yet: & (TTable['_']['name'] extends TTableName ? {} : { serverName: string });
 
@@ -277,6 +278,7 @@ const createZeroTableBuilder = <
   const isColumnBuilder = (value: unknown): value is ColumnBuilder<any> =>
     typeof value === 'object' && value !== null && 'schema' in value;
 
+  const resolvedColumnNames = new Map<string, string>();
   const columnsMapped = typedEntries(tableColumns).reduce(
     (acc, [key, column]) => {
       const columnConfig =
@@ -295,6 +297,7 @@ const createZeroTableBuilder = <
           : casing === 'camelCase'
             ? toCamelCase(column.name)
             : toSnakeCase(column.name);
+      resolvedColumnNames.set(String(key), resolvedColumnName);
 
       if (typeof columns === 'object' && columns !== null) {
         if (
@@ -415,9 +418,81 @@ const createZeroTableBuilder = <
       ? zeroBuilder.from(resolvedTableName)
       : zeroBuilder;
 
-  return zeroBuilderWithFrom
+  let zeroBuilderWithKeys = zeroBuilderWithFrom
     .columns(columnsMapped)
-    .primaryKey(...primaryKeys) as ZeroTableBuilder<
+    .primaryKey(...primaryKeys);
+
+  const uniqueKeys: [string, ...string[]][] = [];
+  const seenKeys = new Set([JSON.stringify([...primaryKeys])]);
+  const addUniqueKey = (columns: readonly {name: string}[]) => {
+    const stableKeys = columns.map(column =>
+      columnNameToStableKey.get(column.name),
+    );
+
+    if (
+      stableKeys.length === 0 ||
+      stableKeys.some(key => {
+        if (key === undefined || !Object.hasOwn(columnsMapped, key)) {
+          return true;
+        }
+
+        const mappedColumn = columnsMapped[key];
+        // A custom override may point at a different physical column, where the
+        // Drizzle constraint does not apply.
+        return (
+          !isColumnBuilder(mappedColumn) ||
+          (mappedColumn.schema.serverName ?? key) !==
+            resolvedColumnNames.get(key)
+        );
+      })
+    ) {
+      return;
+    }
+
+    const uniqueKey = stableKeys as [string, ...string[]];
+    const serializedKey = JSON.stringify(uniqueKey);
+    if (seenKeys.has(serializedKey)) {
+      return;
+    }
+
+    seenKeys.add(serializedKey);
+    uniqueKeys.push(uniqueKey);
+  };
+
+  for (const column of Object.values(tableColumns)) {
+    if (column.isUnique) {
+      addUniqueKey([column]);
+    }
+  }
+
+  for (const constraint of tableConfig.uniqueConstraints) {
+    addUniqueKey(constraint.columns);
+  }
+
+  for (const index of tableConfig.indexes) {
+    if (!index.config.unique || index.config.where) {
+      continue;
+    }
+
+    const indexColumns = index.config.columns;
+    if (
+      indexColumns.every(
+        (column): column is {name: string} =>
+          typeof column === 'object' &&
+          column !== null &&
+          'name' in column &&
+          typeof column.name === 'string',
+      )
+    ) {
+      addUniqueKey(indexColumns);
+    }
+  }
+
+  for (const uniqueKey of uniqueKeys) {
+    zeroBuilderWithKeys = zeroBuilderWithKeys.unique(...uniqueKey);
+  }
+
+  return zeroBuilderWithKeys as ZeroTableBuilder<
     TTableName,
     TTable,
     TColumnConfig
