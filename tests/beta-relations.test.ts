@@ -151,6 +151,62 @@ describe('beta relations engine', () => {
     });
 
     expectSchemaDeepEqual(result).toEqual(expected);
+
+    // Excluded aliases must not steal the source, target, or junction table
+    // key from an included export of the same table.
+    const schemaWithAliases = {
+      users,
+      groups,
+      usersToGroups,
+      schemaRelations,
+      aUsersAlias: users,
+      aGroupsAlias: groups,
+      aUsersToGroupsAlias: usersToGroups,
+    };
+
+    for (const schema of [
+      schemaWithAliases,
+      Object.fromEntries(Object.entries(schemaWithAliases).reverse()),
+    ]) {
+      const withAliases = drizzleZeroConfig(schema, {
+        tables: {
+          users: true,
+          groups: true,
+          usersToGroups: true,
+          aUsersAlias: false,
+          // The other aliases are excluded by omission.
+        },
+      });
+
+      expectSchemaDeepEqual(withAliases).toEqual(expected);
+    }
+  });
+
+  test('skips relationships when every export of the target table is excluded', () => {
+    const users = pgTable('user', {
+      id: text('id').primaryKey(),
+    });
+    const posts = pgTable('post', {
+      id: text('id').primaryKey(),
+      authorId: text('author_id').notNull(),
+    });
+    const schemaRelations = defineRelations({users, posts}, r => ({
+      posts: {
+        author: r.one.users({
+          from: r.posts.authorId,
+          to: r.users.id,
+          optional: false,
+        }),
+      },
+    }));
+
+    const result = drizzleZeroConfig(
+      {users, posts, aUsersAlias: users, schemaRelations},
+      {tables: {posts: true, users: false}},
+    );
+
+    expect(Object.keys(result.tables)).toEqual(['posts']);
+    expect(result.relationships).toEqual({});
   });
 
   test('merges multiple beta defineRelationsPart exports', () => {

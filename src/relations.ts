@@ -219,9 +219,11 @@ const getThroughFieldNames = (columns: ThroughColumn[]): string[] =>
 
 const normalizeBetaRelation = ({
   schema,
+  includedTableKeys,
   relation,
 }: {
   schema: Record<string, unknown>;
+  includedTableKeys: ReadonlySet<string>;
   relation: RuntimeBetaRelation;
 }): NormalizedRelation => {
   if (!is(relation.sourceTable, Table) || !is(relation.targetTable, Table)) {
@@ -232,12 +234,14 @@ const normalizeBetaRelation = ({
 
   const sourceTableName = getDrizzleKeyFromTable({
     schema,
+    includedTableKeys,
     table: relation.sourceTable,
     fallbackTableName: getTableName(relation.sourceTable),
   });
 
   const targetTableName = getDrizzleKeyFromTable({
     schema,
+    includedTableKeys,
     table: relation.targetTable,
     fallbackTableName: relation.targetTableName,
   });
@@ -273,6 +277,7 @@ const normalizeBetaRelation = ({
 
     const throughTableName = getDrizzleKeyFromTable({
       schema,
+      includedTableKeys,
       table: relation.throughTable,
       fallbackTableName: getTableName(relation.throughTable),
     });
@@ -568,7 +573,11 @@ const drizzleZeroConfig = <
 
   for (const [tableKey, relationConfig] of discoveredRelations) {
     for (const relation of Object.values(relationConfig.relations)) {
-      const normalizedRelation = normalizeBetaRelation({schema, relation});
+      const normalizedRelation = normalizeBetaRelation({
+        schema,
+        includedTableKeys,
+        relation,
+      });
       const throughTableName =
         normalizedRelation.hops.length === 2
           ? normalizedRelation.hops[0]!.destSchema
@@ -650,20 +659,23 @@ const drizzleZeroConfig = <
  */
 const getDrizzleKeyFromTable = ({
   schema,
+  includedTableKeys,
   table,
   fallbackTableName,
 }: {
   schema: Record<string, unknown>;
+  includedTableKeys: ReadonlySet<string>;
   table?: Table;
   fallbackTableName?: string;
 }) => {
-  // A table can be exported under more than one key. Take the smallest
-  // matching key rather than the first one, so the key a relation points at
-  // does not depend on the order the schema happens to export its tables in.
+  // Prefer the smallest included alias so an excluded export cannot hide a
+  // relationship. Keep an excluded match when no alias is included, allowing
+  // the caller to skip the relationship using its normal inclusion check.
   const smallestMatch = (
     predicate: (candidate: Table) => boolean,
   ): string | undefined => {
     let match: string | undefined;
+    let includedMatch: string | undefined;
 
     for (const [name, tableOrRelations] of typedEntries(schema)) {
       if (!is(tableOrRelations, Table) || !predicate(tableOrRelations)) {
@@ -673,9 +685,16 @@ const getDrizzleKeyFromTable = ({
       if (match === undefined || String(name) < match) {
         match = String(name);
       }
+
+      if (
+        includedTableKeys.has(String(name)) &&
+        (includedMatch === undefined || String(name) < includedMatch)
+      ) {
+        includedMatch = String(name);
+      }
     }
 
-    return match;
+    return includedMatch ?? match;
   };
 
   if (table) {
