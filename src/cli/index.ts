@@ -1,10 +1,10 @@
 import {Command} from 'commander';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {pathToFileURL} from 'node:url';
 import {Project} from 'ts-morph';
 import {getConfigFromFile, getDefaultConfigFilePath} from './config';
 import {getDefaultConfig} from './drizzle-kit';
+import {formatSchema} from './format';
 import {getGeneratedSchema} from './shared';
 import {checkSignature, signContent} from './signature';
 import {discoverAllTsConfigs} from './tsconfig';
@@ -17,39 +17,6 @@ const defaultConfigFile = './drizzle-zero.config.ts';
 const defaultOutputFile = './zero-schema.gen.ts';
 const defaultTsConfigFile = './tsconfig.json';
 const defaultDrizzleKitConfigPath = './drizzle.config.ts';
-
-export async function loadPrettier() {
-  try {
-    return await import('prettier');
-  } catch (_) {}
-
-  try {
-    const path = require.resolve('prettier', {paths: [process.cwd()]});
-    return await import(pathToFileURL(path).href);
-  } catch {
-    throw new Error(
-      '⚠️  drizzle-zero: prettier could not be found. Install it locally with\n  npm i -D prettier',
-    );
-  }
-}
-
-export async function formatSchema(
-  schema: string,
-  filePath: string,
-): Promise<string> {
-  try {
-    const prettier = await loadPrettier();
-    const prettierOptions = await prettier.resolveConfig(filePath);
-
-    return prettier.format(schema, {
-      ...prettierOptions,
-      parser: 'typescript',
-    });
-  } catch {
-    console.warn('⚠️  drizzle-zero: prettier not found, skipping formatting');
-    return schema;
-  }
-}
 
 export interface GeneratorOptions {
   config?: string;

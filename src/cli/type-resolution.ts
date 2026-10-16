@@ -50,6 +50,10 @@ export function resolveCustomTypes({
     return new Map();
   }
 
+  // Use the bundled compiler's deterministic ordering for every caller,
+  // including projects whose tsconfig does not enable it.
+  project.compilerOptions.set({stableTypeOrdering: true});
+
   const resolverFile = project.createSourceFile(RESOLVER_FILE_NAME, '', {
     overwrite: true,
   });

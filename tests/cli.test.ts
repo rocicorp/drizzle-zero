@@ -226,6 +226,26 @@ describe('getGeneratedSchema', () => {
     ).toThrow(/❌ drizzle-zero: Failed to find type definitions for/);
   });
 
+  it('resolves the config file by path, not by file name', () => {
+    // A same-named file one directory shallower, which is what ts-morph's
+    // file-name search returns first when matching on the bare file name.
+    const otherConfigPath = path.resolve(__dirname, './one-to-one.zero.ts');
+
+    tsProject.createSourceFile(
+      otherConfigPath,
+      'export const schema = {tables: {}, relationships: {}} as const;',
+      {overwrite: true},
+    );
+
+    const [, declaration] = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    expect(declaration.getSourceFile().getFilePath()).toBe(schemaPath);
+  });
+
   it('should handle schema with empty entries correctly', () => {
     const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
       tsProject,
@@ -1122,6 +1142,107 @@ describe('getGeneratedSchema', () => {
     );
   });
 
+  it('gives colliding generated names distinct, key-derived identifiers', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const table = (name: string) => ({
+      name,
+      primaryKey: ['id'] as [string],
+      columns: {
+        id: {type: 'number' as const, optional: false, customType: null},
+      },
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            // `user` and `users` both singularize to `User`.
+            user: table('user'),
+            users: table('users'),
+            // `row` collides with the imported `Row`, `schema` with the
+            // generated `Schema` type alias.
+            row: table('row'),
+            schema: table('schema'),
+          },
+          relationships: {},
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+      skipBuilder: true,
+    });
+
+    const declaredTypeNames = [
+      ...generatedSchema.matchAll(/^export type (\w+)\b/gm),
+    ].map(match => match[1]);
+
+    expect(declaredTypeNames).toEqual([...new Set(declaredTypeNames)]);
+    expect(declaredTypeNames).toContain('Schema');
+    expect(declaredTypeNames).not.toContain('User');
+    expect(declaredTypeNames).not.toContain('Row');
+  });
+
+  it('names table consts independently of declaration order', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const table = (name: string) => ({
+      name,
+      primaryKey: ['id'] as [string],
+      columns: {
+        id: {type: 'number' as const, optional: false, customType: null},
+      },
+    });
+
+    // Both sanitize to `userProfileTable`.
+    const snake = table('user_profile');
+    const camel = table('userProfile');
+
+    const constNameFor = (
+      tables: Record<string, typeof snake>,
+      marker: string,
+    ) => {
+      const generated = getGeneratedSchema({
+        tsProject,
+        result: {
+          type: 'config',
+          zeroSchema: {tables, relationships: {}},
+          exportName: 'schema',
+          zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+        },
+        outputFilePath,
+        skipTypes: true,
+        skipBuilder: true,
+      });
+
+      return generated.match(
+        new RegExp(`const (\\w+) = \\{[^}]*?"name": "${marker}"`, 's'),
+      )?.[1];
+    };
+
+    expect(
+      constNameFor({user_profile: snake, userProfile: camel}, 'user_profile'),
+    ).toBe(
+      constNameFor({userProfile: camel, user_profile: snake}, 'user_profile'),
+    );
+    expect(
+      constNameFor({user_profile: snake, userProfile: camel}, 'userProfile'),
+    ).toBe(
+      constNameFor({userProfile: camel, user_profile: snake}, 'userProfile'),
+    );
+  });
+
   it('should handle table names with various casing correctly', () => {
     const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
       tsProject,
@@ -1405,6 +1526,97 @@ describe('getGeneratedSchema', () => {
     // Check that enableLegacyMutators is set to true in the generated schema
     expect(generatedSchema).toContain('"enableLegacyMutators": true');
     expect(generatedSchema).not.toContain('"enableLegacyMutators": false');
+  });
+
+  it('does not rewrite columns whose names collide with schema-level keys', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            users: {
+              name: 'users',
+              primaryKey: ['id'],
+              columns: {
+                id: {type: 'number', optional: false, customType: null},
+                enableLegacyMutators: {
+                  type: 'boolean',
+                  optional: false,
+                  customType: null,
+                },
+                enableLegacyQueries: {
+                  type: 'boolean',
+                  optional: false,
+                  customType: null,
+                },
+              },
+            },
+          },
+          relationships: {},
+          enableLegacyMutators: true,
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+      enableLegacyMutators: true,
+    });
+
+    // The schema-level flag is still rewritten...
+    expect(generatedSchema).toContain('"enableLegacyMutators": true');
+    // ...but the identically named columns keep their definitions.
+    expect(generatedSchema).toContain('"enableLegacyMutators": {');
+    expect(generatedSchema).toContain('"enableLegacyQueries": {');
+  });
+
+  it('only substitutes customType for real column definitions', () => {
+    const zeroSchemaTypeDecl = getZeroSchemaDefsFromConfig({
+      tsProject,
+      configPath: schemaPath,
+      exportName: 'schema',
+    });
+
+    const generatedSchema = getGeneratedSchema({
+      tsProject,
+      result: {
+        type: 'config',
+        zeroSchema: {
+          tables: {
+            users: {
+              name: 'users',
+              primaryKey: ['id'],
+              columns: {
+                id: {type: 'number', optional: false, customType: null},
+              },
+            },
+          },
+          relationships: {
+            users: {
+              // A relationship payload that happens to carry a `customType`
+              // key at the same depth a column definition would.
+              posts: [{sourceField: ['id'], customType: null}],
+            },
+          },
+        },
+        exportName: 'schema',
+        zeroSchemaTypeDeclarations: zeroSchemaTypeDecl,
+      },
+      outputFilePath,
+    });
+
+    const relationshipConst = generatedSchema.slice(
+      generatedSchema.indexOf('const usersRelationships'),
+    );
+
+    expect(relationshipConst).toContain('"customType": null');
+    expect(relationshipConst).not.toContain('null as unknown as');
   });
 
   it('should set enableLegacyQueries to true', () => {

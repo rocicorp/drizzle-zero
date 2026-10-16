@@ -77,13 +77,16 @@ export function getZeroSchemaDefsFromConfig({
   configPath: string;
   exportName: string;
 }) {
-  const fileName = configPath.slice(configPath.lastIndexOf('/') + 1);
+  // Look the file up by absolute path. A bare file name makes ts-morph fall
+  // back to a "path ends with" search, which silently picks the first match by
+  // directory depth when a project holds more than one config of that name.
+  const fullConfigPath = path.resolve(process.cwd(), configPath);
 
-  const sourceFile = tsProject.getSourceFile(fileName);
+  const sourceFile = tsProject.getSourceFile(fullConfigPath);
 
   if (!sourceFile) {
     throw new Error(
-      `❌ drizzle-zero: Failed to find type definitions for ${fileName}`,
+      `❌ drizzle-zero: Failed to find type definitions for ${fullConfigPath}`,
     );
   }
 
