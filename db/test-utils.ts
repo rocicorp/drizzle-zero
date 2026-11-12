@@ -1691,7 +1691,6 @@ export const startZero = async (options: {getQueriesUrl: string}) => {
     .withNetwork(startedNetwork)
     .withEnvironment({
       ZERO_UPSTREAM_DB: `${basePgUrlWithInternalPort}/drizzle_zero`,
-      ZERO_AUTH_SECRET: 'secretkey',
       ZERO_REPLICA_FILE: '/zero.db',
       ZERO_NUM_SYNC_WORKERS: '1',
       ZERO_ADMIN_PASSWORD: 'password',
