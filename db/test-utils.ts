@@ -1683,7 +1683,7 @@ export const startZero = async (options: {getQueriesUrl: string}) => {
   const basePgUrlWithInternalPort = `${basePgUrl}@postgres-db:5432`;
 
   // Start Zero container
-  zeroContainer = await new GenericContainer(`rocicorp/zero:1.11.0`)
+  zeroContainer = await new GenericContainer(`rocicorp/zero:1.12.0`)
     .withExposedPorts({
       container: 4848,
       host: ZERO_PORT,
@@ -1691,7 +1691,6 @@ export const startZero = async (options: {getQueriesUrl: string}) => {
     .withNetwork(startedNetwork)
     .withEnvironment({
       ZERO_UPSTREAM_DB: `${basePgUrlWithInternalPort}/drizzle_zero`,
-      ZERO_AUTH_SECRET: 'secretkey',
       ZERO_REPLICA_FILE: '/zero.db',
       ZERO_NUM_SYNC_WORKERS: '1',
       ZERO_ADMIN_PASSWORD: 'password',
